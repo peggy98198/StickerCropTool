@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
-import { Upload, Download, MessageCircle, ZoomOut, GripVertical, MessageSquare, X, ChevronDown } from 'lucide-react';
+import { Upload, Download, MessageCircle, ZoomOut, GripVertical, MessageSquare, X, ChevronDown, Home } from 'lucide-react';
+import { Link } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import JSZip from 'jszip';
@@ -85,11 +86,15 @@ function SortableSticker({ id, dataUrl, index, onDownload }: SortableStickerProp
   );
 }
 
-export default function StickerCropTool() {
+interface StickerCropToolProps {
+  platform?: 'kakao' | 'ogq';
+}
+
+export default function StickerCropTool({ platform: fixedPlatform }: StickerCropToolProps = {}) {
   const [image, setImage] = useState<HTMLImageElement | null>(null);
   const [croppedImages, setCroppedImages] = useState<string[]>([]);
   const [currentSize, setCurrentSize] = useState<number | string>(1000);
-  const [platform, setPlatform] = useState<'kakao' | 'ogq' | null>(null);
+  const [platform, setPlatform] = useState<'kakao' | 'ogq' | null>(fixedPlatform || null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [ogqMainImage, setOgqMainImage] = useState<string | null>(null);
   const [ogqTabImage, setOgqTabImage] = useState<string | null>(null);
@@ -439,20 +444,47 @@ export default function StickerCropTool() {
     URL.revokeObjectURL(link.href);
   };
 
+  const isKakaoMode = fixedPlatform === 'kakao' || (!fixedPlatform && platform === 'kakao');
+  const isOgqMode = fixedPlatform === 'ogq' || (!fixedPlatform && platform === 'ogq');
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
+        {fixedPlatform && (
+          <div className="mb-4">
+            <Link href="/">
+              <Button variant="outline" className="gap-2" data-testid="button-home">
+                <Home size={18} />
+                홈으로
+              </Button>
+            </Link>
+          </div>
+        )}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-800 mb-2">
-            이모티콘 절단기
+            {fixedPlatform === 'kakao' && '카카오톡 이모티콘 절단기'}
+            {fixedPlatform === 'ogq' && '네이버 OGQ 이모티콘 절단기'}
+            {!fixedPlatform && '이모티콘 절단기'}
           </h1>
           <p className="text-gray-700 mb-2">
             이미지를 업로드하고 원하는 부분을 잘라서 이모티콘을 만드세요
           </p>
-          <div className="text-sm font-semibold space-y-1">
-            <p className="text-yellow-600">🟡 카카오톡: 1000×1000 (32장) → 360×360 축소</p>
-            <p className="text-green-600">🟢 네이버 OGQ: 1000×1000 (32장) → 메인/탭 생성 → 740×640 변환</p>
-          </div>
+          {fixedPlatform === 'kakao' && (
+            <div className="text-sm font-semibold">
+              <p className="text-yellow-600">🟡 1000×1000 (32장) → 360×360 축소</p>
+            </div>
+          )}
+          {fixedPlatform === 'ogq' && (
+            <div className="text-sm font-semibold">
+              <p className="text-green-600">🟢 1000×1000 (32장) → 메인/탭 생성 → 740×640 변환</p>
+            </div>
+          )}
+          {!fixedPlatform && (
+            <div className="text-sm font-semibold space-y-1">
+              <p className="text-yellow-600">🟡 카카오톡: 1000×1000 (32장) → 360×360 축소</p>
+              <p className="text-green-600">🟢 네이버 OGQ: 1000×1000 (32장) → 메인/탭 생성 → 740×640 변환</p>
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -544,27 +576,31 @@ export default function StickerCropTool() {
                   />
                 </div>
 
-                <Button
-                  data-testid="button-crop-kakao"
-                  onClick={cropKakaoStickers}
-                  disabled={isProcessing}
-                  className="w-full mt-2 py-3 px-6 font-semibold"
-                  style={{ backgroundColor: 'hsl(45, 93%, 58%)', color: '#1f2937' }}
-                >
-                  <MessageCircle size={20} />
-                  {isProcessing ? '처리 중...' : `카카오톡 (${gridCols}×${gridRows} = ${gridCols * gridRows}장)`}
-                </Button>
+                {(!fixedPlatform || fixedPlatform === 'kakao') && (
+                  <Button
+                    data-testid="button-crop-kakao"
+                    onClick={cropKakaoStickers}
+                    disabled={isProcessing}
+                    className="w-full mt-2 py-3 px-6 font-semibold"
+                    style={{ backgroundColor: 'hsl(45, 93%, 58%)', color: '#1f2937' }}
+                  >
+                    <MessageCircle size={20} />
+                    {isProcessing ? '처리 중...' : `${fixedPlatform ? '스티커 자르기' : '카카오톡'} (${gridCols}×${gridRows} = ${gridCols * gridRows}장)`}
+                  </Button>
+                )}
 
-                <Button
-                  data-testid="button-crop-ogq"
-                  onClick={cropOGQStickers}
-                  disabled={isProcessing}
-                  className="w-full mt-2 py-3 px-6 font-semibold"
-                  style={{ backgroundColor: 'hsl(142, 71%, 45%)', color: 'white' }}
-                >
-                  <MessageCircle size={20} />
-                  {isProcessing ? '처리 중...' : `네이버 OGQ (${gridCols}×${gridRows} = ${gridCols * gridRows}장)`}
-                </Button>
+                {(!fixedPlatform || fixedPlatform === 'ogq') && (
+                  <Button
+                    data-testid="button-crop-ogq"
+                    onClick={cropOGQStickers}
+                    disabled={isProcessing}
+                    className="w-full mt-2 py-3 px-6 font-semibold"
+                    style={{ backgroundColor: 'hsl(142, 71%, 45%)', color: 'white' }}
+                  >
+                    <MessageCircle size={20} />
+                    {isProcessing ? '처리 중...' : `${fixedPlatform ? '스티커 자르기' : '네이버 OGQ'} (${gridCols}×${gridRows} = ${gridCols * gridRows}장)`}
+                  </Button>
+                )}
 
                 {platform === 'kakao' && croppedImages.length > 0 && typeof currentSize === 'number' && (
                   <>
@@ -843,7 +879,7 @@ export default function StickerCropTool() {
         
         <footer className="mt-8 py-4 text-center text-sm text-gray-500 border-t">
           <p>
-            © 2024{' '}
+            © 2025{' '}
             <a 
               href="https://instagram.com/zziraengi" 
               target="_blank" 

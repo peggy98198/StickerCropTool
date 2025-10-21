@@ -3,13 +3,16 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import Home from "@/pages/Home";
 import StickerCropTool from "@/pages/StickerCropTool";
 
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={StickerCropTool} />
-      <Route path="*" component={StickerCropTool} />
+      <Route path="/" component={Home} />
+      <Route path="/kakao" component={() => <StickerCropTool platform="kakao" />} />
+      <Route path="/ogq" component={() => <StickerCropTool platform="ogq" />} />
+      <Route path="*" component={Home} />
     </Switch>
   );
 }
