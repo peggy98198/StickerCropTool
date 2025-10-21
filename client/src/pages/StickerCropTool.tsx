@@ -842,7 +842,18 @@ export default function StickerCropTool() {
         </div>
         
         <footer className="mt-8 py-4 text-center text-sm text-gray-500 border-t">
-          <p>© 2024 Sticker Crop Tool. All rights reserved.</p>
+          <p>
+            © 2024{' '}
+            <a 
+              href="https://instagram.com/zziraengi" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-purple-600 hover:text-purple-800 hover:underline"
+            >
+              @zziraengi
+            </a>
+            . All rights reserved.
+          </p>
         </footer>
       </div>
     </div>
