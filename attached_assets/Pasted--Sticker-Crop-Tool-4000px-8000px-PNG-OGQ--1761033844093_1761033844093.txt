@@ -1,0 +1,128 @@
+# 이모티콘 절단기 (Sticker Crop Tool)
+
+## 프로젝트 개요
+4000px × 8000px PNG 이미지를 카카오톡 및 네이버 OGQ 이모티콘 플랫폼 규격에 맞게 자동으로 분할하고 리사이징하는 웹 애플리케이션입니다.
+
+## 기술 스택
+- **프레임워크**: React 18+
+- **스타일링**: Tailwind CSS
+- **아이콘**: lucide-react
+- **빌드 툴**: Vite (권장)
+- **언어**: JavaScript/TypeScript
+
+## 주요 기능
+
+### 1. 카카오톡 이모티콘 생성
+- 4000×8000px 이미지 → 1000×1000px 32장 자동 분할
+- 1000×1000px → 360×360px 축소 옵션
+- 파일명: `sticker_01.png` ~ `sticker_32.png`, `sticker_01_360.png` ~ `sticker_32_360.png`
+
+### 2. 네이버 OGQ 이모티콘 생성
+- 4000×8000px 이미지 → 1000×1000px 32장 자동 분할 (중간 단계)
+- **OGQ 메인 이미지**: 32장 중 선택한 이미지를 240×240px로 리사이즈 (1장)
+- **OGQ 탭 이미지**: 32장 중 선택한 이미지를 96×74px로 리사이즈 (1장)
+- 1000×1000px 32장 → 740×640px 32장 변환 (중앙 크롭)
+- 파일명: `sticker_01_ogq.png` ~ `sticker_32_ogq.png`, `ogq_main_240x240.png`, `ogq_tab_96x74.png`
+
+## 상태 관리 구조
+```javascript
+const [image, setImage] = useState(null);           // 업로드된 원본 이미지
+const [croppedImages, setCroppedImages] = useState([]); // 분할된 32장 이미지 배열
+const [currentSize, setCurrentSize] = useState(1000);   // 현재 이미지 크기 (1000, 360, '740x640')
+const [platform, setPlatform] = useState(null);     // 선택한 플랫폼 ('kakao' 또는 'ogq')
+const [ogqMainImage, setOgqMainImage] = useState(null);  // OGQ 메인 이미지
+const [ogqTabImage, setOgqTabImage] = useState(null);    // OGQ 탭 이미지
+const [selectedMainIndex, setSelectedMainIndex] = useState(0); // 메인 이미지 선택 인덱스
+const [selectedTabIndex, setSelectedTabIndex] = useState(0);   // 탭 이미지 선택 인덱스
+```
+
+## 핵심 함수 설명
+
+### 이미지 분할
+- `cropKakaoStickers()`: 4000×8000을 1000×1000 32장으로 분할, platform을 'kakao'로 설정
+- `cropOGQStickers()`: 4000×8000을 1000×1000 32장으로 분할, platform을 'ogq'로 설정
+
+### 이미지 변환
+- `resizeTo360()`: 카카오톡용, 1000×1000 → 360×360 축소
+- `convertToOGQSize()`: OGQ용, 1000×1000 → 740×640 중앙 크롭
+- `createOgqMainImage()`: 선택한 1000×1000 이미지 → 240×240 메인 이미지
+- `createOgqTabImage()`: 선택한 1000×1000 이미지 → 96×74 탭 이미지
+
+### Canvas 처리
+- HTML Canvas API 사용하여 이미지 크롭 및 리사이즈
+- `toDataURL('image/png')`로 base64 데이터 URL 생성
+
+## 워크플로우
+
+### 카카오톡 워크플로우
+1. 사용자가 4000×8000px PNG 업로드
+2. "카카오톡 (1000×1000 32장)" 버튼 클릭
+3. 32장 생성 완료 → 360×360 축소 버튼 표시
+4. (선택) 360×360 축소 버튼 클릭
+5. 개별/전체 다운로드
+
+### 네이버 OGQ 워크플로우
+1. 사용자가 4000×8000px PNG 업로드
+2. "네이버 OGQ (1000×1000 32장)" 버튼 클릭
+3. 32장 생성 완료 → 메인/탭 선택 UI + 740×640 변환 버튼 표시
+4. 드롭다운에서 메인 이미지 번호 선택 → 생성 클릭 → 240×240 생성
+5. 드롭다운에서 탭 이미지 번호 선택 → 생성 클릭 → 96×74 생성
+6. "740×640으로 변환하기" 버튼 클릭 → 32장 모두 740×640으로 변환
+7. 개별/전체 다운로드
+
+## UI 구조
+
+### 왼쪽 패널
+- 이미지 업로드 버튼
+- 업로드된 이미지 미리보기
+- 플랫폼 선택 버튼 (카카오톡 / 네이버 OGQ)
+- 조건부 렌더링:
+  - **카카오톡 선택 시**: 360×360 축소 버튼
+  - **OGQ 선택 시**: 메인/탭 선택 드롭다운 + 생성 버튼, 740×640 변환 버튼
+
+### 오른쪽 패널
+- OGQ 메인/탭 이미지 표시 섹션 (OGQ 플랫폼일 때만)
+- 32장 스티커 그리드 (3열)
+- 전체 다운로드 버튼
+
+## 파일 구조 (권장)
+```
+/
+├── src/
+│   ├── App.jsx (또는 App.tsx)
+│   ├── index.css (Tailwind 설정)
+│   └── main.jsx
+├── index.html
+├── package.json
+├── vite.config.js
+└── tailwind.config.js
+```
+
+## 설치 및 실행
+```bash
+npm install
+npm run dev
+```
+
+## 주요 의존성
+```json
+{
+  "dependencies": {
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "lucide-react": "latest"
+  },
+  "devDependencies": {
+    "vite": "latest",
+    "tailwindcss": "latest",
+    "autoprefixer": "latest",
+    "postcss": "latest"
+  }
+}
+```
+
+## 중요 노트
+- 모든 이미지 처리는 클라이언트 사이드에서 진행 (서버 불필요)
+- 4000×8000 규격 이미지를 위해 설계되었으나, 다른 크기도 작동 가능
+- 브라우저 Canvas API 사용으로 메모리 제한 주의
+- 다운로드는 브라우저 기본 다운로드 기능 사용 (200ms 간격)
