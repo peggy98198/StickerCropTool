@@ -1,7 +1,8 @@
 import { useState, useRef } from 'react';
-import { Upload, Download, MessageCircle, ZoomOut, GripVertical, MessageSquare, X } from 'lucide-react';
+import { Upload, Download, MessageCircle, ZoomOut, GripVertical, MessageSquare, X, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import JSZip from 'jszip';
 import {
   DndContext,
   closestCenter,
@@ -413,10 +414,29 @@ export default function StickerCropTool() {
     link.click();
   };
 
-  const downloadAll = () => {
-    croppedImages.forEach((dataUrl, index) => {
-      setTimeout(() => downloadImage(dataUrl, index), index * 200);
-    });
+  const downloadAll = async () => {
+    const zip = new JSZip();
+    
+    let sizeLabel = '';
+    if (currentSize === 360) {
+      sizeLabel = '_360';
+    } else if (currentSize === '740x640') {
+      sizeLabel = '_ogq';
+    }
+    
+    for (let i = 0; i < croppedImages.length; i++) {
+      const dataUrl = croppedImages[i];
+      const base64Data = dataUrl.split(',')[1];
+      const filename = `sticker_${String(i + 1).padStart(2, '0')}${sizeLabel}.png`;
+      zip.file(filename, base64Data, { base64: true });
+    }
+    
+    const content = await zip.generateAsync({ type: 'blob' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(content);
+    link.download = `stickers${sizeLabel}.zip`;
+    link.click();
+    URL.revokeObjectURL(link.href);
   };
 
   return (
@@ -717,11 +737,15 @@ export default function StickerCropTool() {
                   <Button
                     data-testid="button-chat-preview"
                     onClick={() => setShowChatPreview(!showChatPreview)}
-                    className="py-2 px-4"
+                    className="py-2 px-4 flex items-center gap-2"
                     style={{ backgroundColor: showChatPreview ? 'hsl(142, 71%, 45%)' : 'hsl(217, 91%, 60%)', color: 'white' }}
                   >
                     <MessageSquare size={18} />
-                    {showChatPreview ? '미리보기 닫기' : '채팅 미리보기'}
+                    <span>카카오톡 대화창 미리보기</span>
+                    <ChevronDown 
+                      size={18} 
+                      className={`transform transition-transform duration-200 ${showChatPreview ? 'rotate-180' : 'rotate-0'}`}
+                    />
                   </Button>
                   <Button
                     data-testid="button-download-all"
@@ -743,7 +767,8 @@ export default function StickerCropTool() {
                 </div>
                 
                 <div 
-                  className="rounded-lg p-4 max-h-[500px] overflow-y-auto bg-yellow-50"
+                  className="rounded-lg p-4 max-h-[500px] overflow-y-auto"
+                  style={{ backgroundColor: '#9FBFD6' }}
                   data-testid="chat-preview-container"
                 >
                   <div className="space-y-3">
