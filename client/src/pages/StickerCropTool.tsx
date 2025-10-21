@@ -1,7 +1,88 @@
 import { useState, useRef } from 'react';
-import { Upload, Download, MessageCircle, ZoomOut } from 'lucide-react';
+import { Upload, Download, MessageCircle, ZoomOut, GripVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  rectSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
+interface SortableStickerProps {
+  id: string;
+  dataUrl: string;
+  index: number;
+  onDownload: () => void;
+}
+
+function SortableSticker({ id, dataUrl, index, onDownload }: SortableStickerProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    cursor: isDragging ? 'grabbing' : 'grab',
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="border-2 border-gray-200 rounded-lg p-2 bg-gray-50 hover:shadow-md transition relative group"
+      data-testid={`card-sticker-${index}`}
+    >
+      <button
+        {...attributes}
+        {...listeners}
+        className="absolute top-1 left-1 bg-gray-800 bg-opacity-70 text-white rounded p-1 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity cursor-grab active:cursor-grabbing focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+        data-testid={`drag-handle-${index}`}
+        aria-label={`Drag sticker ${index + 1}`}
+        type="button"
+      >
+        <GripVertical size={14} />
+      </button>
+      <div className="text-xs text-gray-500 mb-1 text-center font-semibold">
+        #{index + 1}
+      </div>
+      <img
+        src={dataUrl}
+        alt={`Sticker ${index + 1}`}
+        className="w-full h-auto rounded mb-2"
+        data-testid={`img-sticker-${index}`}
+        draggable={false}
+      />
+      <Button
+        data-testid={`button-download-${index}`}
+        onClick={onDownload}
+        className="w-full py-1 px-2 text-xs"
+        style={{ backgroundColor: 'hsl(262, 52%, 47%)', color: 'white' }}
+      >
+        <Download size={12} />
+        다운로드
+      </Button>
+    </div>
+  );
+}
 
 export default function StickerCropTool() {
   const [image, setImage] = useState<HTMLImageElement | null>(null);
@@ -18,6 +99,25 @@ export default function StickerCropTool() {
   const [gridCols, setGridCols] = useState(4);
   const [autoDetectGrid, setAutoDetectGrid] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setCroppedImages((items) => {
+        const oldIndex = items.findIndex((_, i) => `sticker-${i}` === active.id);
+        const newIndex = items.findIndex((_, i) => `sticker-${i}` === over.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
 
   const detectGridSize = (width: number, height: number) => {
     if (width === 4000 && height === 8000) {
@@ -624,41 +724,35 @@ export default function StickerCropTool() {
               )}
             </div>
 
-            <div className="grid grid-cols-3 gap-3 max-h-[600px] overflow-y-auto">
-              {croppedImages.map((dataUrl, index) => (
-                <div
-                  key={index}
-                  className="border-2 border-gray-200 rounded-lg p-2 bg-gray-50 hover:shadow-md transition"
-                  data-testid={`card-sticker-${index}`}
-                >
-                  <div className="text-xs text-gray-500 mb-1 text-center font-semibold">
-                    #{index + 1}
-                  </div>
-                  <img
-                    src={dataUrl}
-                    alt={`Cropped ${index + 1}`}
-                    className="w-full h-auto rounded"
-                    data-testid={`img-sticker-${index}`}
-                  />
-                  <Button
-                    data-testid={`button-download-${index}`}
-                    onClick={() => downloadImage(dataUrl, index)}
-                    className="w-full mt-2 py-1 px-2 text-xs"
-                    style={{ backgroundColor: 'hsl(217, 91%, 60%)', color: 'white' }}
-                  >
-                    <Download size={12} />
-                    다운로드
-                  </Button>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={croppedImages.map((_, i) => `sticker-${i}`)}
+                strategy={rectSortingStrategy}
+              >
+                <div className="grid grid-cols-3 gap-3 max-h-[600px] overflow-y-auto">
+                  {croppedImages.map((dataUrl, index) => (
+                    <SortableSticker
+                      key={`sticker-${index}`}
+                      id={`sticker-${index}`}
+                      dataUrl={dataUrl}
+                      index={index}
+                      onDownload={() => downloadImage(dataUrl, index)}
+                    />
+                  ))}
+                  {croppedImages.length === 0 && (
+                    <div className="col-span-3 text-center text-gray-400 py-12">
+                      <p className="font-semibold mb-2">잘라낸 이미지가 여기에 표시됩니다</p>
+                      <p className="text-sm mt-3">🟡 카카오톡: 1000×1000 (32장) → 360×360 축소</p>
+                      <p className="text-sm">🟢 네이버 OGQ: 1000×1000 (32장) → 메인/탭 생성 → 740×640 변환</p>
+                    </div>
+                  )}
                 </div>
-              ))}
-              {croppedImages.length === 0 && (
-                <div className="col-span-3 text-center text-gray-400 py-12">
-                  <p className="font-semibold mb-2">잘라낸 이미지가 여기에 표시됩니다</p>
-                  <p className="text-sm mt-3">🟡 카카오톡: 1000×1000 (32장) → 360×360 축소</p>
-                  <p className="text-sm">🟢 네이버 OGQ: 1000×1000 (32장) → 메인/탭 생성 → 740×640 변환</p>
-                </div>
-              )}
-            </div>
+              </SortableContext>
+            </DndContext>
           </Card>
         </div>
       </div>
