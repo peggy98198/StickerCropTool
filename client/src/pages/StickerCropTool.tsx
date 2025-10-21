@@ -13,24 +13,56 @@ export default function StickerCropTool() {
   const [ogqTabImage, setOgqTabImage] = useState<string | null>(null);
   const [selectedMainIndex, setSelectedMainIndex] = useState(0);
   const [selectedTabIndex, setSelectedTabIndex] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const loadImageFromFile = (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        setImage(img);
+        setCroppedImages([]);
+        setOgqMainImage(null);
+        setOgqTabImage(null);
+        setPlatform(null);
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const img = new Image();
-        img.onload = () => {
-          setImage(img);
-          setCroppedImages([]);
-          setOgqMainImage(null);
-          setOgqTabImage(null);
-          setPlatform(null);
-        };
-        img.src = event.target?.result as string;
-      };
-      reader.readAsDataURL(file);
+      loadImageFromFile(file);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      loadImageFromFile(file);
     }
   };
 
@@ -288,15 +320,24 @@ export default function StickerCropTool() {
                 onChange={handleImageUpload}
                 className="hidden"
               />
-              <Button
-                data-testid="button-upload-image"
+              <div
+                data-testid="dropzone-upload"
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
                 onClick={() => fileInputRef.current?.click()}
-                className="w-full py-3 px-6"
-                style={{ backgroundColor: 'hsl(217, 91%, 60%)', color: 'white' }}
+                className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all ${
+                  isDragging
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
+                }`}
               >
-                <Upload size={20} />
-                이미지 업로드
-              </Button>
+                <Upload size={48} className={`mx-auto mb-3 ${isDragging ? 'text-blue-500' : 'text-gray-400'}`} />
+                <p className="text-gray-700 font-semibold mb-1">
+                  {isDragging ? '이미지를 여기에 놓으세요' : '이미지를 드래그하거나 클릭하여 업로드'}
+                </p>
+                <p className="text-sm text-gray-500">PNG, JPG, GIF 지원</p>
+              </div>
             </div>
 
             {image && (
@@ -422,12 +463,6 @@ export default function StickerCropTool() {
               </>
             )}
 
-            {!image && (
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center text-gray-400">
-                <Upload size={48} className="mx-auto mb-4 opacity-50" />
-                <p>이미지를 업로드하여 시작하세요</p>
-              </div>
-            )}
           </Card>
 
           <Card className="rounded-2xl shadow-lg p-6">
