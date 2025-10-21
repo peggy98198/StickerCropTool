@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Upload, Download, MessageCircle, ZoomOut, GripVertical } from 'lucide-react';
+import { Upload, Download, MessageCircle, ZoomOut, GripVertical, MessageSquare, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
@@ -98,6 +98,8 @@ export default function StickerCropTool() {
   const [gridRows, setGridRows] = useState(8);
   const [gridCols, setGridCols] = useState(4);
   const [autoDetectGrid, setAutoDetectGrid] = useState(true);
+  const [showChatPreview, setShowChatPreview] = useState(false);
+  const [chatPreviewPlatform, setChatPreviewPlatform] = useState<'kakao' | 'ogq'>('kakao');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const sensors = useSensors(
@@ -712,17 +714,118 @@ export default function StickerCropTool() {
                 )}
               </h2>
               {croppedImages.length > 0 && (
-                <Button
-                  data-testid="button-download-all"
-                  onClick={downloadAll}
-                  className="py-2 px-4"
-                  style={{ backgroundColor: 'hsl(262, 52%, 47%)', color: 'white' }}
-                >
-                  <Download size={18} />
-                  전체 다운로드
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    data-testid="button-chat-preview"
+                    onClick={() => setShowChatPreview(!showChatPreview)}
+                    className="py-2 px-4"
+                    style={{ backgroundColor: showChatPreview ? 'hsl(142, 71%, 45%)' : 'hsl(217, 91%, 60%)', color: 'white' }}
+                  >
+                    <MessageSquare size={18} />
+                    {showChatPreview ? '미리보기 닫기' : '채팅 미리보기'}
+                  </Button>
+                  <Button
+                    data-testid="button-download-all"
+                    onClick={downloadAll}
+                    className="py-2 px-4"
+                    style={{ backgroundColor: 'hsl(262, 52%, 47%)', color: 'white' }}
+                  >
+                    <Download size={18} />
+                    전체 다운로드
+                  </Button>
+                </div>
               )}
             </div>
+
+            {showChatPreview && croppedImages.length > 0 && (
+              <div className="mb-6 p-4 bg-white rounded-lg border-2 border-gray-200">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="font-bold text-gray-800">채팅 미리보기</h3>
+                  <div className="flex gap-2">
+                    <Button
+                      data-testid="button-preview-kakao"
+                      onClick={() => setChatPreviewPlatform('kakao')}
+                      className="py-1 px-3 text-sm"
+                      style={{ 
+                        backgroundColor: chatPreviewPlatform === 'kakao' ? 'hsl(45, 93%, 58%)' : 'hsl(0, 0%, 85%)',
+                        color: chatPreviewPlatform === 'kakao' ? '#1f2937' : '#4b5563'
+                      }}
+                    >
+                      카카오톡
+                    </Button>
+                    <Button
+                      data-testid="button-preview-ogq"
+                      onClick={() => setChatPreviewPlatform('ogq')}
+                      className="py-1 px-3 text-sm"
+                      style={{ 
+                        backgroundColor: chatPreviewPlatform === 'ogq' ? 'hsl(142, 71%, 45%)' : 'hsl(0, 0%, 85%)',
+                        color: chatPreviewPlatform === 'ogq' ? 'white' : '#4b5563'
+                      }}
+                    >
+                      OGQ
+                    </Button>
+                  </div>
+                </div>
+                
+                <div 
+                  className={`rounded-lg p-4 max-h-[500px] overflow-y-auto ${
+                    chatPreviewPlatform === 'kakao' ? 'bg-yellow-50' : 'bg-green-50'
+                  }`}
+                  data-testid="chat-preview-container"
+                >
+                  <div className="space-y-3">
+                    {croppedImages.slice(0, 6).map((dataUrl, index) => (
+                      <div key={index}>
+                        {index % 2 === 0 ? (
+                          <div className="flex justify-start">
+                            <div className="max-w-xs">
+                              <div className="text-xs text-gray-600 mb-1">친구</div>
+                              <div 
+                                className={`rounded-2xl p-3 shadow-sm ${
+                                  chatPreviewPlatform === 'kakao' 
+                                    ? 'bg-white border border-gray-200' 
+                                    : 'bg-white border border-gray-200'
+                                }`}
+                              >
+                                <img 
+                                  src={dataUrl} 
+                                  alt={`Chat sticker ${index + 1}`}
+                                  className="w-28 h-28 rounded"
+                                  data-testid={`chat-sticker-${index}`}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex justify-end">
+                            <div className="max-w-xs">
+                              <div className="text-xs text-gray-600 mb-1 text-right">나</div>
+                              <div 
+                                className={`rounded-2xl p-3 shadow-sm ${
+                                  chatPreviewPlatform === 'kakao' 
+                                    ? 'bg-yellow-400 border border-yellow-500' 
+                                    : 'bg-green-400 border border-green-500'
+                                }`}
+                              >
+                                <img 
+                                  src={dataUrl} 
+                                  alt={`Chat sticker ${index + 1}`}
+                                  className="w-28 h-28 rounded"
+                                  data-testid={`chat-sticker-${index}`}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-gray-500 text-center mt-4">
+                    {croppedImages.length > 6 ? `처음 6개 스티커만 미리보기로 표시됩니다 (총 ${croppedImages.length}개)` : `총 ${croppedImages.length}개 스티커`}
+                  </p>
+                </div>
+              </div>
+            )}
 
             <DndContext
               sensors={sensors}

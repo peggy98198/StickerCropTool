@@ -5,11 +5,14 @@
 This is a web application for processing 4000×8000px PNG images into sticker formats for KakaoTalk and Naver OGQ emoticon platforms. The tool automatically splits large images into individual stickers and resizes them according to platform-specific requirements.
 
 **Key Features:**
-- Splits 4000×8000px images into 32 individual 1000×1000px stickers (4 columns × 8 rows)
-- KakaoTalk mode: Optionally resizes stickers to 360×360px
-- OGQ mode: Crops stickers to 740×640px center and generates platform-specific main (240×240px) and tab (96×74px) images
-- Client-side image processing using HTML5 Canvas API
-- Batch download functionality with platform-specific file naming
+- **Custom Grid Support:** Flexible image dimensions with automatic grid detection (analyzes image to suggest cols/rows) and manual configuration
+- **Drag-and-Drop Upload:** Visual dropzone with hover states for easy file selection
+- **Drag-and-Drop Reordering:** Rearrange stickers in preview grid using @dnd-kit library with keyboard accessibility
+- **Chat Preview Mode:** Realistic KakaoTalk and OGQ chat bubble preview with platform-specific styling and sticker display
+- **KakaoTalk Mode:** Splits images into grid → optionally resizes stickers to 360×360px
+- **OGQ Mode:** Splits images into grid → generates platform-specific main (240×240px) and tab (96×74px) images → converts to 740×640px
+- **Client-Side Processing:** HTML5 Canvas API for all image manipulation
+- **Batch Download:** Downloads all stickers with platform-specific file naming
 
 ## User Preferences
 
@@ -68,6 +71,7 @@ Preferred communication style: Simple, everyday language.
 
 **UI Libraries:**
 - Radix UI components for accessible primitives (dialogs, dropdowns, tooltips, etc.)
+- @dnd-kit (core, sortable, utilities) for drag-and-drop interactions
 - Lucide React for icons
 - Tailwind CSS for utility-first styling
 - class-variance-authority (cva) for component variant management
