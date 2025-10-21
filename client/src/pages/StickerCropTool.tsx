@@ -14,7 +14,26 @@ export default function StickerCropTool() {
   const [selectedMainIndex, setSelectedMainIndex] = useState(0);
   const [selectedTabIndex, setSelectedTabIndex] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [gridRows, setGridRows] = useState(8);
+  const [gridCols, setGridCols] = useState(4);
+  const [autoDetectGrid, setAutoDetectGrid] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const detectGridSize = (width: number, height: number) => {
+    if (width === 4000 && height === 8000) {
+      return { cols: 4, rows: 8 };
+    }
+    
+    const stickerSize = 1000;
+    const detectedCols = Math.floor(width / stickerSize);
+    const detectedRows = Math.floor(height / stickerSize);
+    
+    if (detectedCols > 0 && detectedRows > 0) {
+      return { cols: detectedCols, rows: detectedRows };
+    }
+    
+    return { cols: 4, rows: 8 };
+  };
 
   const loadImageFromFile = (file: File) => {
     if (!file.type.startsWith('image/')) {
@@ -30,6 +49,12 @@ export default function StickerCropTool() {
         setOgqMainImage(null);
         setOgqTabImage(null);
         setPlatform(null);
+        
+        if (autoDetectGrid) {
+          const detected = detectGridSize(img.width, img.height);
+          setGridCols(detected.cols);
+          setGridRows(detected.rows);
+        }
       };
       img.src = event.target?.result as string;
     };
@@ -72,12 +97,12 @@ export default function StickerCropTool() {
     setIsProcessing(true);
     const newCroppedImages: string[] = [];
     
-    const stickerSize = 1000;
-    const cols = 4;
-    const rows = 8;
+    const stickerWidth = Math.floor(image.width / gridCols);
+    const stickerHeight = Math.floor(image.height / gridRows);
+    const stickerSize = Math.min(stickerWidth, stickerHeight);
     
-    for (let row = 0; row < rows; row++) {
-      for (let col = 0; col < cols; col++) {
+    for (let row = 0; row < gridRows; row++) {
+      for (let col = 0; col < gridCols; col++) {
         const tempCanvas = document.createElement('canvas');
         tempCanvas.width = stickerSize;
         tempCanvas.height = stickerSize;
@@ -86,10 +111,10 @@ export default function StickerCropTool() {
         if (tempCtx) {
           tempCtx.drawImage(
             image,
-            col * stickerSize,
-            row * stickerSize,
-            stickerSize,
-            stickerSize,
+            col * stickerWidth,
+            row * stickerHeight,
+            stickerWidth,
+            stickerHeight,
             0,
             0,
             stickerSize,
@@ -103,7 +128,7 @@ export default function StickerCropTool() {
     }
     
     setCroppedImages(newCroppedImages);
-    setCurrentSize(1000);
+    setCurrentSize(stickerSize);
     setPlatform('kakao');
     setIsProcessing(false);
   };
@@ -114,12 +139,12 @@ export default function StickerCropTool() {
     setIsProcessing(true);
     const newCroppedImages: string[] = [];
     
-    const stickerSize = 1000;
-    const cols = 4;
-    const rows = 8;
+    const stickerWidth = Math.floor(image.width / gridCols);
+    const stickerHeight = Math.floor(image.height / gridRows);
+    const stickerSize = Math.min(stickerWidth, stickerHeight);
     
-    for (let row = 0; row < rows; row++) {
-      for (let col = 0; col < cols; col++) {
+    for (let row = 0; row < gridRows; row++) {
+      for (let col = 0; col < gridCols; col++) {
         const tempCanvas = document.createElement('canvas');
         tempCanvas.width = stickerSize;
         tempCanvas.height = stickerSize;
@@ -128,10 +153,10 @@ export default function StickerCropTool() {
         if (tempCtx) {
           tempCtx.drawImage(
             image,
-            col * stickerSize,
-            row * stickerSize,
-            stickerSize,
-            stickerSize,
+            col * stickerWidth,
+            row * stickerHeight,
+            stickerWidth,
+            stickerHeight,
             0,
             0,
             stickerSize,
@@ -145,13 +170,13 @@ export default function StickerCropTool() {
     }
     
     setCroppedImages(newCroppedImages);
-    setCurrentSize(1000);
+    setCurrentSize(stickerSize);
     setPlatform('ogq');
     setIsProcessing(false);
   };
 
   const createOgqMainImage = () => {
-    if (croppedImages.length === 0 || currentSize !== 1000) return;
+    if (croppedImages.length === 0 || typeof currentSize === 'string') return;
     
     const selectedImage = croppedImages[selectedMainIndex];
     const img = new Image();
@@ -172,7 +197,7 @@ export default function StickerCropTool() {
   };
 
   const createOgqTabImage = () => {
-    if (croppedImages.length === 0 || currentSize !== 1000) return;
+    if (croppedImages.length === 0 || typeof currentSize === 'string') return;
     
     const selectedImage = croppedImages[selectedTabIndex];
     const img = new Image();
@@ -210,7 +235,7 @@ export default function StickerCropTool() {
   };
 
   const convertToOGQSize = async () => {
-    if (croppedImages.length === 0 || currentSize !== 1000) return;
+    if (croppedImages.length === 0 || typeof currentSize === 'string') return;
     
     setIsProcessing(true);
     
@@ -342,6 +367,53 @@ export default function StickerCropTool() {
 
             {image && (
               <>
+                <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-semibold text-gray-900">그리드 설정</h3>
+                    <label className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={autoDetectGrid}
+                        onChange={(e) => setAutoDetectGrid(e.target.checked)}
+                        className="rounded"
+                        data-testid="checkbox-auto-detect"
+                      />
+                      <span className="text-gray-700">자동 감지</span>
+                    </label>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">열 (Columns)</label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="20"
+                        value={gridCols}
+                        onChange={(e) => setGridCols(parseInt(e.target.value) || 4)}
+                        disabled={autoDetectGrid}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                        data-testid="input-grid-cols"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">행 (Rows)</label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="20"
+                        value={gridRows}
+                        onChange={(e) => setGridRows(parseInt(e.target.value) || 8)}
+                        disabled={autoDetectGrid}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                        data-testid="input-grid-rows"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-600 mt-2">
+                    이미지 크기: {image.width}×{image.height}px | 총 {gridCols}×{gridRows} = {gridCols * gridRows}개 스티커
+                  </p>
+                </div>
+
                 <div className="border-2 border-gray-200 rounded-lg overflow-hidden mb-4">
                   <img 
                     src={image.src} 
@@ -359,7 +431,7 @@ export default function StickerCropTool() {
                   style={{ backgroundColor: 'hsl(45, 93%, 58%)', color: '#1f2937' }}
                 >
                   <MessageCircle size={20} />
-                  {isProcessing ? '처리 중...' : '카카오톡 (1000×1000 32장)'}
+                  {isProcessing ? '처리 중...' : `카카오톡 (${gridCols}×${gridRows} = ${gridCols * gridRows}장)`}
                 </Button>
 
                 <Button
@@ -370,10 +442,10 @@ export default function StickerCropTool() {
                   style={{ backgroundColor: 'hsl(142, 71%, 45%)', color: 'white' }}
                 >
                   <MessageCircle size={20} />
-                  {isProcessing ? '처리 중...' : '네이버 OGQ (1000×1000 32장)'}
+                  {isProcessing ? '처리 중...' : `네이버 OGQ (${gridCols}×${gridRows} = ${gridCols * gridRows}장)`}
                 </Button>
 
-                {platform === 'kakao' && croppedImages.length > 0 && currentSize === 1000 && (
+                {platform === 'kakao' && croppedImages.length > 0 && typeof currentSize === 'number' && (
                   <>
                     <div className="border-t-2 border-gray-200 my-4"></div>
 
@@ -390,7 +462,7 @@ export default function StickerCropTool() {
                   </>
                 )}
 
-                {platform === 'ogq' && croppedImages.length > 0 && currentSize === 1000 && (
+                {platform === 'ogq' && croppedImages.length > 0 && typeof currentSize === 'number' && (
                   <>
                     <div className="border-t-2 border-gray-200 my-4"></div>
                     
