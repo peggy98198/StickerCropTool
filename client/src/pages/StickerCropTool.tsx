@@ -99,7 +99,6 @@ export default function StickerCropTool() {
   const [gridCols, setGridCols] = useState(4);
   const [autoDetectGrid, setAutoDetectGrid] = useState(true);
   const [showChatPreview, setShowChatPreview] = useState(false);
-  const [chatPreviewPlatform, setChatPreviewPlatform] = useState<'kakao' | 'ogq'>('kakao');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const sensors = useSensors(
@@ -739,38 +738,12 @@ export default function StickerCropTool() {
 
             {showChatPreview && croppedImages.length > 0 && (
               <div className="mb-6 p-4 bg-white rounded-lg border-2 border-gray-200">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="font-bold text-gray-800">채팅 미리보기</h3>
-                  <div className="flex gap-2">
-                    <Button
-                      data-testid="button-preview-kakao"
-                      onClick={() => setChatPreviewPlatform('kakao')}
-                      className="py-1 px-3 text-sm"
-                      style={{ 
-                        backgroundColor: chatPreviewPlatform === 'kakao' ? 'hsl(45, 93%, 58%)' : 'hsl(0, 0%, 85%)',
-                        color: chatPreviewPlatform === 'kakao' ? '#1f2937' : '#4b5563'
-                      }}
-                    >
-                      카카오톡
-                    </Button>
-                    <Button
-                      data-testid="button-preview-ogq"
-                      onClick={() => setChatPreviewPlatform('ogq')}
-                      className="py-1 px-3 text-sm"
-                      style={{ 
-                        backgroundColor: chatPreviewPlatform === 'ogq' ? 'hsl(142, 71%, 45%)' : 'hsl(0, 0%, 85%)',
-                        color: chatPreviewPlatform === 'ogq' ? 'white' : '#4b5563'
-                      }}
-                    >
-                      OGQ
-                    </Button>
-                  </div>
+                <div className="mb-4">
+                  <h3 className="font-bold text-gray-800">카카오톡 대화창 미리보기</h3>
                 </div>
                 
                 <div 
-                  className={`rounded-lg p-4 max-h-[500px] overflow-y-auto ${
-                    chatPreviewPlatform === 'kakao' ? 'bg-yellow-50' : 'bg-green-50'
-                  }`}
+                  className="rounded-lg p-4 max-h-[500px] overflow-y-auto bg-yellow-50"
                   data-testid="chat-preview-container"
                 >
                   <div className="space-y-3">
@@ -780,40 +753,24 @@ export default function StickerCropTool() {
                           <div className="flex justify-start">
                             <div className="max-w-xs">
                               <div className="text-xs text-gray-600 mb-1">친구</div>
-                              <div 
-                                className={`rounded-2xl p-3 shadow-sm ${
-                                  chatPreviewPlatform === 'kakao' 
-                                    ? 'bg-white border border-gray-200' 
-                                    : 'bg-white border border-gray-200'
-                                }`}
-                              >
-                                <img 
-                                  src={dataUrl} 
-                                  alt={`Chat sticker ${index + 1}`}
-                                  className="w-28 h-28 rounded"
-                                  data-testid={`chat-sticker-${index}`}
-                                />
-                              </div>
+                              <img 
+                                src={dataUrl} 
+                                alt={`Chat sticker ${index + 1}`}
+                                className="w-28 h-28"
+                                data-testid={`chat-sticker-${index}`}
+                              />
                             </div>
                           </div>
                         ) : (
                           <div className="flex justify-end">
                             <div className="max-w-xs">
                               <div className="text-xs text-gray-600 mb-1 text-right">나</div>
-                              <div 
-                                className={`rounded-2xl p-3 shadow-sm ${
-                                  chatPreviewPlatform === 'kakao' 
-                                    ? 'bg-yellow-400 border border-yellow-500' 
-                                    : 'bg-green-400 border border-green-500'
-                                }`}
-                              >
-                                <img 
-                                  src={dataUrl} 
-                                  alt={`Chat sticker ${index + 1}`}
-                                  className="w-28 h-28 rounded"
-                                  data-testid={`chat-sticker-${index}`}
-                                />
-                              </div>
+                              <img 
+                                src={dataUrl} 
+                                alt={`Chat sticker ${index + 1}`}
+                                className="w-28 h-28"
+                                data-testid={`chat-sticker-${index}`}
+                              />
                             </div>
                           </div>
                         )}
@@ -858,6 +815,10 @@ export default function StickerCropTool() {
             </DndContext>
           </Card>
         </div>
+        
+        <footer className="mt-8 py-4 text-center text-sm text-gray-500 border-t">
+          <p>© 2024 Sticker Crop Tool. All rights reserved.</p>
+        </footer>
       </div>
     </div>
   );
