@@ -25,12 +25,9 @@ export default function Home() {
                 <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-yellow-100 flex items-center justify-center group-hover:bg-yellow-200 transition-colors">
                   <MessageSquare size={40} className="text-yellow-600" />
                 </div>
-                <h2 className="text-2xl font-bold text-gray-800 mb-3">
+                <h2 className="text-2xl font-bold text-gray-800 mb-4">
                   카카오톡
                 </h2>
-                <p className="text-gray-600 mb-4">
-                  1000×1000 (32장) → 360×360 축소
-                </p>
                 <div className="text-sm text-gray-500 space-y-1">
                   <p>✓ 자동 그리드 감지</p>
                   <p>✓ 드래그 앤 드롭 업로드</p>
@@ -47,12 +44,9 @@ export default function Home() {
                 <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-green-100 flex items-center justify-center group-hover:bg-green-200 transition-colors">
                   <Hash size={40} className="text-green-600" />
                 </div>
-                <h2 className="text-2xl font-bold text-gray-800 mb-3">
+                <h2 className="text-2xl font-bold text-gray-800 mb-4">
                   네이버 OGQ
                 </h2>
-                <p className="text-gray-600 mb-4">
-                  1000×1000 (32장) → 메인/탭 생성 → 740×640 변환
-                </p>
                 <div className="text-sm text-gray-500 space-y-1">
                   <p>✓ 자동 그리드 감지</p>
                   <p>✓ 드래그 앤 드롭 업로드</p>
