@@ -1,7 +1,6 @@
 import { Link } from 'wouter';
 import { MessageSquare, Hash } from 'lucide-react';
 import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 
 export default function Home() {
   return (
@@ -66,21 +65,6 @@ export default function Home() {
         </div>
 
         <footer className="mt-12 py-4 text-center text-sm text-gray-500 border-t">
-          <a 
-            href="https://ko-fi.com/zziraengi" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            data-testid="link-support-home"
-            className="inline-block mb-4"
-          >
-            <Button 
-              variant="ghost"
-              className="gap-2 text-base font-medium text-gray-700 hover:brightness-95"
-              style={{ backgroundColor: '#c5cec8' }}
-            >
-              ☕ 개발자 후원하기
-            </Button>
-          </a>
           <p>
             © 2025{' '}
             <a 
