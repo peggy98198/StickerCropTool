@@ -60,7 +60,8 @@ export default function Home() {
       {/* 헤더 */}
       <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 md:px-8 py-4 flex items-center justify-between">
-          <h1 className="text-xl font-bold text-gray-800">이모티콘 절단기</h1>
+          <div className="w-10"></div>
+          <h1 className="text-3xl font-bold text-gray-800 flex-1 text-center">이모티콘 절단기</h1>
           
           <Dialog open={feedbackOpen} onOpenChange={setFeedbackOpen}>
             <DropdownMenu>
@@ -134,9 +135,6 @@ export default function Home() {
       <div className="p-4 md:p-8">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-800 mb-4">
-              이모티콘 절단기
-            </h2>
             <p className="text-lg text-gray-600 mb-2">
               이미지를 업로드하고 원하는 부분을 잘라서 이모티콘을 만드세요
             </p>
