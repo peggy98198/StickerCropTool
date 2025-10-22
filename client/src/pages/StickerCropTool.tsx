@@ -131,6 +131,10 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
       return { cols: 4, rows: 8 };
     }
     
+    if (width === 2960 && height === 2840) {
+      return { cols: 4, rows: 4 };
+    }
+    
     const stickerSize = 1000;
     const detectedCols = Math.floor(width / stickerSize);
     const detectedRows = Math.floor(height / stickerSize);
@@ -248,27 +252,54 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
     
     const stickerWidth = Math.floor(image.width / gridCols);
     const stickerHeight = Math.floor(image.height / gridRows);
-    const stickerSize = Math.min(stickerWidth, stickerHeight);
+    
+    const is2960x2840 = image.width === 2960 && image.height === 2840;
     
     for (let row = 0; row < gridRows; row++) {
       for (let col = 0; col < gridCols; col++) {
         const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = stickerSize;
-        tempCanvas.height = stickerSize;
-        const tempCtx = tempCanvas.getContext('2d');
         
-        if (tempCtx) {
-          tempCtx.drawImage(
-            image,
-            col * stickerWidth,
-            row * stickerHeight,
-            stickerWidth,
-            stickerHeight,
-            0,
-            0,
-            stickerSize,
-            stickerSize
-          );
+        if (is2960x2840) {
+          tempCanvas.width = 740;
+          tempCanvas.height = 640;
+          const tempCtx = tempCanvas.getContext('2d');
+          
+          if (tempCtx) {
+            const sourceX = col * stickerWidth;
+            const sourceY = row * stickerHeight;
+            const cropY = (stickerHeight - 640) / 2;
+            
+            tempCtx.drawImage(
+              image,
+              sourceX,
+              sourceY + cropY,
+              740,
+              640,
+              0,
+              0,
+              740,
+              640
+            );
+          }
+        } else {
+          const stickerSize = Math.min(stickerWidth, stickerHeight);
+          tempCanvas.width = stickerSize;
+          tempCanvas.height = stickerSize;
+          const tempCtx = tempCanvas.getContext('2d');
+          
+          if (tempCtx) {
+            tempCtx.drawImage(
+              image,
+              col * stickerWidth,
+              row * stickerHeight,
+              stickerWidth,
+              stickerHeight,
+              0,
+              0,
+              stickerSize,
+              stickerSize
+            );
+          }
         }
         
         const croppedDataUrl = tempCanvas.toDataURL('image/png');
@@ -277,13 +308,15 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
     }
     
     setCroppedImages(newCroppedImages);
-    setCurrentSize(stickerSize);
+    setCurrentSize(is2960x2840 ? '740×640' : Math.min(stickerWidth, stickerHeight));
     setPlatform('ogq');
     setIsProcessing(false);
   };
 
   const createOgqMainImage = () => {
-    if (croppedImages.length === 0 || typeof currentSize === 'string') return;
+    if (croppedImages.length === 0) return;
+    
+    const is740x640 = currentSize === '740×640';
     
     const selectedImage = croppedImages[selectedMainIndex];
     const img = new Image();
@@ -304,7 +337,7 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
   };
 
   const createOgqTabImage = () => {
-    if (croppedImages.length === 0 || typeof currentSize === 'string') return;
+    if (croppedImages.length === 0) return;
     
     const selectedImage = croppedImages[selectedTabIndex];
     const img = new Image();
@@ -315,21 +348,22 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
       const tempCtx = tempCanvas.getContext('2d');
       
       if (tempCtx) {
-        const sourceSize = 1000;
+        const sourceWidth = img.width;
+        const sourceHeight = img.height;
         const targetWidth = 96;
         const targetHeight = 74;
         
-        const sourceAspect = sourceSize / sourceSize;
+        const sourceAspect = sourceWidth / sourceHeight;
         const targetAspect = targetWidth / targetHeight;
         
-        let sx = 0, sy = 0, sw = sourceSize, sh = sourceSize;
+        let sx = 0, sy = 0, sw = sourceWidth, sh = sourceHeight;
         
         if (sourceAspect > targetAspect) {
-          sw = sourceSize * targetAspect;
-          sx = (sourceSize - sw) / 2;
+          sw = sourceHeight * targetAspect;
+          sx = (sourceWidth - sw) / 2;
         } else {
-          sh = sourceSize / targetAspect;
-          sy = (sourceSize - sh) / 2;
+          sh = sourceWidth / targetAspect;
+          sy = (sourceHeight - sh) / 2;
         }
         
         tempCtx.drawImage(img, sx, sy, sw, sh, 0, 0, targetWidth, targetHeight);
@@ -342,7 +376,10 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
   };
 
   const convertToOGQSize = async () => {
-    if (croppedImages.length === 0 || typeof currentSize === 'string') return;
+    if (croppedImages.length === 0) return;
+    
+    const is740x640 = currentSize === '740×640';
+    if (is740x640) return;
     
     setIsProcessing(true);
     
@@ -371,7 +408,7 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
     
     const convertedImages = await Promise.all(convertPromises);
     setCroppedImages(convertedImages);
-    setCurrentSize('740x640');
+    setCurrentSize('740×640');
     setIsProcessing(false);
   };
 
@@ -411,7 +448,7 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
     let sizeLabel = '';
     if (currentSize === 360) {
       sizeLabel = '_360';
-    } else if (currentSize === '740x640') {
+    } else if (currentSize === '740×640') {
       sizeLabel = '_ogq';
     }
     link.download = `sticker_${String(index + 1).padStart(2, '0')}${sizeLabel}.png`;
@@ -425,7 +462,7 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
     let sizeLabel = '';
     if (currentSize === 360) {
       sizeLabel = '_360';
-    } else if (currentSize === '740x640') {
+    } else if (currentSize === '740×640') {
       sizeLabel = '_ogq';
     }
     
@@ -619,7 +656,7 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
                   </>
                 )}
 
-                {platform === 'ogq' && croppedImages.length > 0 && typeof currentSize === 'number' && (
+                {platform === 'ogq' && croppedImages.length > 0 && (
                   <>
                     <div className="border-t-2 border-gray-200 my-4"></div>
                     
@@ -677,16 +714,22 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
 
                     <div className="border-t-2 border-gray-200 my-4"></div>
 
-                    <Button
-                      data-testid="button-convert-740x640"
-                      onClick={convertToOGQSize}
-                      disabled={isProcessing}
-                      className="w-full mt-2 py-3 px-6 font-semibold"
-                      style={{ backgroundColor: 'hsl(24, 95%, 53%)', color: 'white' }}
-                    >
-                      <ZoomOut size={20} />
-                      {isProcessing ? '처리 중...' : '740×640으로 변환하기'}
-                    </Button>
+                    {currentSize === '740×640' ? (
+                      <div className="bg-green-50 border-2 border-green-200 rounded-lg p-4 text-center">
+                        <p className="text-green-800 font-semibold">✓ 이미 740×640 크기입니다</p>
+                      </div>
+                    ) : (
+                      <Button
+                        data-testid="button-convert-740x640"
+                        onClick={convertToOGQSize}
+                        disabled={isProcessing}
+                        className="w-full mt-2 py-3 px-6 font-semibold"
+                        style={{ backgroundColor: 'hsl(24, 95%, 53%)', color: 'white' }}
+                      >
+                        <ZoomOut size={20} />
+                        {isProcessing ? '처리 중...' : '740×640으로 변환하기'}
+                      </Button>
+                    )}
                   </>
                 )}
               </>
@@ -764,7 +807,7 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
                 잘라낸 이미지 ({croppedImages.length})
                 {croppedImages.length > 0 && (
                   <span className="text-sm font-normal text-purple-600 ml-2">
-                    [{currentSize === '740x640' ? '740×640px' : `${currentSize}×${currentSize}px`}]
+                    [{typeof currentSize === 'string' ? `${currentSize}px` : `${currentSize}×${currentSize}px`}]
                   </span>
                 )}
               </h2>
