@@ -1,4 +1,5 @@
 import { Link } from 'wouter';
+import { MessageSquare } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 
 export default function Home() {
@@ -22,7 +23,7 @@ export default function Home() {
             <Card className="p-8 hover:shadow-xl transition-all cursor-pointer border-2 hover:border-yellow-400 group">
               <div className="text-center">
                 <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-yellow-100 flex items-center justify-center group-hover:bg-yellow-200 transition-colors">
-                  <span className="text-5xl font-bold text-yellow-600">K</span>
+                  <MessageSquare size={40} className="text-yellow-600" />
                 </div>
                 <h2 className="text-2xl font-bold text-gray-800 mb-4">
                   카카오톡
