@@ -507,19 +507,19 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
             이미지를 업로드하고 원하는 부분을 잘라서 이모티콘을 만드세요
           </p>
           {fixedPlatform === 'kakao' && (
-            <div className="text-sm font-semibold">
-              <p className="text-yellow-600">🟡 1000×1000 (32장) → 360×360 축소</p>
+            <div className="text-sm">
+              <p className="text-gray-600">권장 이미지: 4000×8000px</p>
             </div>
           )}
           {fixedPlatform === 'ogq' && (
-            <div className="text-sm font-semibold">
-              <p className="text-green-600">🟢 1000×1000 (32장) → 메인/탭 생성 → 740×640 변환</p>
+            <div className="text-sm">
+              <p className="text-gray-600">권장 이미지: 4000×8000px 또는 2960×2840px</p>
             </div>
           )}
           {!fixedPlatform && (
-            <div className="text-sm font-semibold space-y-1">
-              <p className="text-yellow-600">🟡 카카오톡: 1000×1000 (32장) → 360×360 축소</p>
-              <p className="text-green-600">🟢 네이버 OGQ: 1000×1000 (32장) → 메인/탭 생성 → 740×640 변환</p>
+            <div className="text-sm space-y-1">
+              <p className="text-gray-600">카카오톡 권장: 4000×8000px</p>
+              <p className="text-gray-600">네이버 OGQ 권장: 4000×8000px / 2960×2840px</p>
             </div>
           )}
         </div>
