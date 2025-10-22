@@ -1,6 +1,7 @@
 import { Link } from 'wouter';
-import { MessageSquare, Hash } from 'lucide-react';
+import { MessageSquare, Hash, Heart } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 
 export default function Home() {
   return (
@@ -62,6 +63,36 @@ export default function Home() {
               </div>
             </Card>
           </Link>
+        </div>
+
+        <div className="mb-8">
+          <Card className="p-6 bg-gradient-to-r from-pink-50 to-purple-50 border-2 border-pink-200">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="text-center md:text-left">
+                <h3 className="text-xl font-bold text-gray-800 mb-2 flex items-center justify-center md:justify-start gap-2">
+                  <Heart size={24} className="text-pink-500" />
+                  이 도구가 도움이 되셨나요?
+                </h3>
+                <p className="text-gray-600">
+                  개발을 지원하고 싶으시다면 후원해주세요 ☕
+                </p>
+              </div>
+              <a 
+                href="https://ko-fi.com/zziraengi" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                data-testid="link-support-home"
+              >
+                <Button 
+                  className="gap-2 font-semibold px-6 py-6 text-lg"
+                  style={{ backgroundColor: '#FF5E5B', color: 'white' }}
+                >
+                  <Heart size={20} fill="white" />
+                  Ko-fi로 후원하기
+                </Button>
+              </a>
+            </div>
+          </Card>
         </div>
 
         <footer className="mt-12 py-4 text-center text-sm text-gray-500 border-t">

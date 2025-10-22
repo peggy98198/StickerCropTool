@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Upload, Download, MessageCircle, ZoomOut, GripVertical, MessageSquare, X, ChevronDown, Home } from 'lucide-react';
+import { Upload, Download, MessageCircle, ZoomOut, GripVertical, MessageSquare, X, ChevronDown, Home, Heart } from 'lucide-react';
 import { Link } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -451,13 +451,28 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
         {fixedPlatform && (
-          <div className="mb-4">
+          <div className="mb-4 flex gap-2">
             <Link href="/">
               <Button variant="outline" className="gap-2" data-testid="button-home">
                 <Home size={18} />
                 홈으로
               </Button>
             </Link>
+            <a 
+              href="https://ko-fi.com/zziraengi" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              data-testid="link-support-tool"
+            >
+              <Button 
+                variant="outline" 
+                className="gap-2"
+                style={{ borderColor: '#FF5E5B', color: '#FF5E5B' }}
+              >
+                <Heart size={18} />
+                후원하기
+              </Button>
+            </a>
           </div>
         )}
         <div className="text-center mb-8">
