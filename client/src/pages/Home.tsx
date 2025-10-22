@@ -8,7 +8,7 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-4 md:p-8">
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-12">
-          <h1 className="text-5xl font-bold text-gray-800 mb-4">
+          <h1 className="text-3xl font-bold text-gray-800 mb-4">
             이모티콘 절단기
           </h1>
           <p className="text-lg text-gray-600 mb-2">
@@ -75,7 +75,8 @@ export default function Home() {
           >
             <Button 
               variant="ghost"
-              className="gap-1.5 text-sm bg-yellow-50 hover:bg-yellow-100 text-gray-700"
+              className="gap-2 text-base font-medium text-gray-700 hover:brightness-95"
+              style={{ backgroundColor: '#c5cec8' }}
             >
               ☕ 개발자 후원하기
             </Button>

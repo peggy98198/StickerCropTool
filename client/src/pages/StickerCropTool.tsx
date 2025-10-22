@@ -461,7 +461,7 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
           </div>
         )}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">
             {fixedPlatform === 'kakao' && '카카오톡 이모티콘 절단기'}
             {fixedPlatform === 'ogq' && '네이버 OGQ 이모티콘 절단기'}
             {!fixedPlatform && '이모티콘 절단기'}
@@ -887,7 +887,8 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
           >
             <Button 
               variant="ghost"
-              className="gap-1.5 text-sm bg-yellow-50 hover:bg-yellow-100 text-gray-700"
+              className="gap-2 text-base font-medium text-gray-700 hover:brightness-95"
+              style={{ backgroundColor: '#c5cec8' }}
             >
               ☕ 개발자 후원하기
             </Button>
