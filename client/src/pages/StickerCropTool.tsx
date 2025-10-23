@@ -21,6 +21,9 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { AdMobBanner } from '@/components/admob/AdMobBanner';
+import { ADMOB_CONFIG } from '@/lib/admob-config';
+import { prepareInterstitialAd, showInterstitialAd, isInterstitialReady } from '@/lib/admob-interstitial';
 
 interface SortableStickerProps {
   id: string;
@@ -242,6 +245,11 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
     setCurrentSize(stickerSize);
     setPlatform('kakao');
     setIsProcessing(false);
+    
+    // 전면 광고 준비 (절단 완료 후)
+    prepareInterstitialAd(ADMOB_CONFIG.INTERSTITIAL_ID, ADMOB_CONFIG.TEST_MODE).catch(err => {
+      console.error('전면 광고 준비 실패:', err);
+    });
   };
 
   const cropOGQStickers = () => {
@@ -311,6 +319,11 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
     setCurrentSize(is2960x2840 ? '740×640' : Math.min(stickerWidth, stickerHeight));
     setPlatform('ogq');
     setIsProcessing(false);
+    
+    // 전면 광고 준비 (절단 완료 후)
+    prepareInterstitialAd(ADMOB_CONFIG.INTERSTITIAL_ID, ADMOB_CONFIG.TEST_MODE).catch(err => {
+      console.error('전면 광고 준비 실패:', err);
+    });
   };
 
   const createOgqMainImage = () => {
@@ -479,6 +492,15 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
     link.download = `stickers${sizeLabel}.zip`;
     link.click();
     URL.revokeObjectURL(link.href);
+    
+    // 전면 광고 표시 (다운로드 완료 후)
+    if (isInterstitialReady()) {
+      setTimeout(() => {
+        showInterstitialAd().catch(err => {
+          console.error('전면 광고 표시 실패:', err);
+        });
+      }, 500); // 다운로드 완료 후 0.5초 뒤 광고 표시
+    }
   };
 
   const isKakaoMode = fixedPlatform === 'kakao' || (!fixedPlatform && platform === 'kakao');
@@ -486,10 +508,12 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
-      {/* AdMob 상단 배너 공간 */}
-      <div className="h-[60px] bg-white border-b flex items-center justify-center text-xs text-gray-400">
-        광고 영역
-      </div>
+      {/* AdMob 상단 배너 */}
+      <AdMobBanner 
+        adId={ADMOB_CONFIG.BANNER_TOP_ID} 
+        position="top" 
+        testMode={ADMOB_CONFIG.TEST_MODE}
+      />
       
       <div className="p-4 md:p-8 pb-[80px]">
         <div className="max-w-6xl mx-auto">
@@ -938,9 +962,13 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
         </div>
       </div>
       
-      {/* AdMob 하단 배너 공간 */}
-      <div className="fixed bottom-0 left-0 right-0 h-[60px] bg-white border-t flex items-center justify-center text-xs text-gray-400 z-50">
-        광고 영역
+      {/* AdMob 하단 배너 */}
+      <div className="fixed bottom-0 left-0 right-0 z-50">
+        <AdMobBanner 
+          adId={ADMOB_CONFIG.BANNER_BOTTOM_ID} 
+          position="bottom" 
+          testMode={ADMOB_CONFIG.TEST_MODE}
+        />
       </div>
     </div>
   );
