@@ -1,5 +1,5 @@
 import { Link } from 'wouter';
-import { MessageCircle, Menu, Send, Bot, User } from 'lucide-react';
+import { MessageCircle, Menu, Send, Bot, User, HelpCircle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -16,6 +16,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { useState, useEffect, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
@@ -31,6 +32,7 @@ interface Message {
 
 export default function Home() {
   const [chatOpen, setChatOpen] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
   const [step, setStep] = useState<ChatStep>('welcome');
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
@@ -163,22 +165,169 @@ export default function Home() {
           <div className="w-10"></div>
           <h1 className="text-3xl font-bold text-gray-800 flex-1 text-center">이모티콘 절단기</h1>
           
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" data-testid="button-menu">
+                <Menu size={24} />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={() => setGuideOpen(true)} data-testid="menu-guide">
+                <HelpCircle className="mr-2 h-4 w-4" />
+                <span>사용 방법</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setChatOpen(true)} data-testid="menu-feedback">
+                <MessageCircle className="mr-2 h-4 w-4" />
+                <span>피드백 보내기</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* 사용 방법 Sheet */}
+          <Sheet open={guideOpen} onOpenChange={setGuideOpen}>
+            <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
+              <SheetHeader className="mb-6">
+                <SheetTitle className="flex items-center gap-2">
+                  <HelpCircle className="w-6 h-6 text-blue-600" />
+                  사용 방법
+                </SheetTitle>
+                <SheetDescription>
+                  플랫폼별 이모티콘 제작 가이드
+                </SheetDescription>
+              </SheetHeader>
+
+              <Tabs defaultValue="kakao" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="kakao" data-testid="tab-kakao">카카오톡</TabsTrigger>
+                  <TabsTrigger value="ogq" data-testid="tab-ogq">네이버 OGQ</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="kakao" className="mt-6 space-y-6">
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2">권장 이미지 크기</h3>
+                    <p className="text-sm text-muted-foreground">1000×1000 픽셀 (그리드 형태로 배치된 이미지)</p>
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-semibold mb-3">단계별 가이드</h3>
+                    <ol className="space-y-4 text-sm">
+                      <li className="flex gap-3">
+                        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-yellow-100 text-yellow-700 flex items-center justify-center font-semibold">1</span>
+                        <div>
+                          <p className="font-medium">이미지 업로드</p>
+                          <p className="text-muted-foreground mt-1">파일을 드래그 앤 드롭하거나 클릭하여 선택</p>
+                        </div>
+                      </li>
+                      <li className="flex gap-3">
+                        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-yellow-100 text-yellow-700 flex items-center justify-center font-semibold">2</span>
+                        <div>
+                          <p className="font-medium">그리드 설정</p>
+                          <p className="text-muted-foreground mt-1">자동 감지된 그리드를 확인하거나 수동으로 조정</p>
+                        </div>
+                      </li>
+                      <li className="flex gap-3">
+                        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-yellow-100 text-yellow-700 flex items-center justify-center font-semibold">3</span>
+                        <div>
+                          <p className="font-medium">스티커 순서 조정</p>
+                          <p className="text-muted-foreground mt-1">드래그 앤 드롭으로 원하는 순서로 재배치</p>
+                        </div>
+                      </li>
+                      <li className="flex gap-3">
+                        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-yellow-100 text-yellow-700 flex items-center justify-center font-semibold">4</span>
+                        <div>
+                          <p className="font-medium">미리보기</p>
+                          <p className="text-muted-foreground mt-1">대화창 미리보기로 실제 사용 모습 확인</p>
+                        </div>
+                      </li>
+                      <li className="flex gap-3">
+                        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-yellow-100 text-yellow-700 flex items-center justify-center font-semibold">5</span>
+                        <div>
+                          <p className="font-medium">다운로드</p>
+                          <p className="text-muted-foreground mt-1">ZIP 파일로 모든 스티커 한 번에 다운로드 (360×360 픽셀)</p>
+                        </div>
+                      </li>
+                    </ol>
+                  </div>
+
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <h4 className="font-medium text-yellow-900 mb-2">주요 기능</h4>
+                    <ul className="space-y-1 text-sm text-yellow-800">
+                      <li>• 자동 그리드 감지 및 수동 조정</li>
+                      <li>• 드래그 앤 드롭으로 스티커 순서 변경</li>
+                      <li>• 대화창 스타일 실시간 미리보기</li>
+                      <li>• 360×360 픽셀로 자동 리사이즈</li>
+                    </ul>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="ogq" className="mt-6 space-y-6">
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2">지원 이미지 크기</h3>
+                    <ul className="text-sm text-muted-foreground space-y-1">
+                      <li>• 4000×8000 픽셀 (32개 스티커)</li>
+                      <li>• 1000×1000 픽셀 (32개 스티커)</li>
+                      <li>• 2960×2840 픽셀 (16개 스티커)</li>
+                    </ul>
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-semibold mb-3">단계별 가이드</h3>
+                    <ol className="space-y-4 text-sm">
+                      <li className="flex gap-3">
+                        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-semibold">1</span>
+                        <div>
+                          <p className="font-medium">이미지 업로드</p>
+                          <p className="text-muted-foreground mt-1">파일을 드래그 앤 드롭하거나 클릭하여 선택</p>
+                        </div>
+                      </li>
+                      <li className="flex gap-3">
+                        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-semibold">2</span>
+                        <div>
+                          <p className="font-medium">그리드 설정</p>
+                          <p className="text-muted-foreground mt-1">이미지 크기에 따라 자동으로 그리드 감지</p>
+                        </div>
+                      </li>
+                      <li className="flex gap-3">
+                        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-semibold">3</span>
+                        <div>
+                          <p className="font-medium">스티커 순서 조정</p>
+                          <p className="text-muted-foreground mt-1">드래그 앤 드롭으로 원하는 순서로 재배치</p>
+                        </div>
+                      </li>
+                      <li className="flex gap-3">
+                        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-semibold">4</span>
+                        <div>
+                          <p className="font-medium">미리보기</p>
+                          <p className="text-muted-foreground mt-1">대화창 미리보기로 실제 사용 모습 확인</p>
+                        </div>
+                      </li>
+                      <li className="flex gap-3">
+                        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-semibold">5</span>
+                        <div>
+                          <p className="font-medium">다운로드</p>
+                          <p className="text-muted-foreground mt-1">ZIP 파일로 모든 이미지 다운로드 (740×640 픽셀 + 메인/탭 이미지)</p>
+                        </div>
+                      </li>
+                    </ol>
+                  </div>
+
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <h4 className="font-medium text-green-900 mb-2">주요 기능</h4>
+                    <ul className="space-y-1 text-sm text-green-800">
+                      <li>• 여러 이미지 크기 자동 감지</li>
+                      <li>• 드래그 앤 드롭으로 스티커 순서 변경</li>
+                      <li>• 대화창 스타일 실시간 미리보기</li>
+                      <li>• 메인 이미지 (240×240) 및 탭 이미지 (96×74) 자동 생성</li>
+                      <li>• 740×640 픽셀로 자동 변환</li>
+                    </ul>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </SheetContent>
+          </Sheet>
+
+          {/* 피드백 Sheet */}
           <Sheet open={chatOpen} onOpenChange={handleOpenChange}>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" data-testid="button-menu">
-                  <Menu size={24} />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <SheetTrigger asChild>
-                  <DropdownMenuItem data-testid="menu-feedback">
-                    <MessageCircle className="mr-2 h-4 w-4" />
-                    <span>피드백 보내기</span>
-                  </DropdownMenuItem>
-                </SheetTrigger>
-              </DropdownMenuContent>
-            </DropdownMenu>
 
             <SheetContent className="w-full sm:max-w-md flex flex-col p-0">
               <SheetHeader className="p-6 pb-4 border-b">
