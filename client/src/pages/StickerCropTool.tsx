@@ -485,8 +485,14 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
   const isOgqMode = fixedPlatform === 'ogq' || (!fixedPlatform && platform === 'ogq');
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-4 md:p-8">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
+      {/* AdMob 상단 배너 공간 */}
+      <div className="h-[60px] bg-white border-b flex items-center justify-center text-xs text-gray-400">
+        광고 영역
+      </div>
+      
+      <div className="p-4 md:p-8 pb-[80px]">
+        <div className="max-w-6xl mx-auto">
         {fixedPlatform && (
           <div className="mb-4">
             <Link href="/">
@@ -524,8 +530,8 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
           )}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="rounded-2xl shadow-lg p-6">
+        <div className="flex flex-col gap-6 max-w-2xl mx-auto">
+          <Card className="rounded-2xl shadow-lg p-4 sm:p-6">
             <div className="mb-4">
               <input
                 data-testid="input-image-upload"
@@ -618,10 +624,10 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
                     data-testid="button-crop-kakao"
                     onClick={cropKakaoStickers}
                     disabled={isProcessing}
-                    className="w-full mt-2 py-3 px-6 font-semibold"
+                    className="w-full mt-2 py-4 px-6 font-semibold text-base min-h-[56px]"
                     style={{ backgroundColor: 'hsl(45, 93%, 58%)', color: '#1f2937' }}
                   >
-                    <MessageCircle size={20} />
+                    <MessageCircle size={24} />
                     {isProcessing ? '처리 중...' : `${fixedPlatform ? '스티커 자르기' : '카카오톡'} (${gridCols}×${gridRows} = ${gridCols * gridRows}장)`}
                   </Button>
                 )}
@@ -631,10 +637,10 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
                     data-testid="button-crop-ogq"
                     onClick={cropOGQStickers}
                     disabled={isProcessing}
-                    className="w-full mt-2 py-3 px-6 font-semibold"
+                    className="w-full mt-2 py-4 px-6 font-semibold text-base min-h-[56px]"
                     style={{ backgroundColor: 'hsl(142, 71%, 45%)', color: 'white' }}
                   >
-                    <MessageCircle size={20} />
+                    <MessageCircle size={24} />
                     {isProcessing ? '처리 중...' : `${fixedPlatform ? '스티커 자르기' : '네이버 OGQ'} (${gridCols}×${gridRows} = ${gridCols * gridRows}장)`}
                   </Button>
                 )}
@@ -647,10 +653,10 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
                       data-testid="button-resize-360"
                       onClick={resizeTo360}
                       disabled={isProcessing}
-                      className="w-full mt-2 py-3 px-6 font-semibold"
+                      className="w-full mt-2 py-4 px-6 font-semibold text-base min-h-[56px]"
                       style={{ backgroundColor: 'hsl(262, 52%, 47%)', color: 'white' }}
                     >
-                      <ZoomOut size={20} />
+                      <ZoomOut size={24} />
                       {isProcessing ? '처리 중...' : '360×360으로 축소하기'}
                     </Button>
                   </>
@@ -723,10 +729,10 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
                         data-testid="button-convert-740x640"
                         onClick={convertToOGQSize}
                         disabled={isProcessing}
-                        className="w-full mt-2 py-3 px-6 font-semibold"
+                        className="w-full mt-2 py-4 px-6 font-semibold text-base min-h-[56px]"
                         style={{ backgroundColor: 'hsl(24, 95%, 53%)', color: 'white' }}
                       >
-                        <ZoomOut size={20} />
+                        <ZoomOut size={24} />
                         {isProcessing ? '처리 중...' : '740×640으로 변환하기'}
                       </Button>
                     )}
@@ -737,7 +743,7 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
 
           </Card>
 
-          <Card className="rounded-2xl shadow-lg p-6">
+          <Card className="rounded-2xl shadow-lg p-4 sm:p-6">
             {platform === 'ogq' && (ogqMainImage || ogqTabImage) && (
               <div className="mb-6 pb-6 border-b-2 border-gray-200">
                 <h2 className="text-xl font-bold text-gray-800 mb-4">
@@ -924,35 +930,17 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
           </Card>
         </div>
         
-        <footer className="mt-8 py-4 text-center text-sm text-gray-500 border-t">
-          <a 
-            href="https://ko-fi.com/zziraengi" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            data-testid="link-support-tool"
-            className="inline-block mb-3"
-          >
-            <Button 
-              variant="ghost"
-              className="gap-2 text-base font-medium text-gray-700 hover:brightness-95"
-              style={{ backgroundColor: '#c5cec8' }}
-            >
-              ☕ 개발자 후원하기
-            </Button>
-          </a>
+        <footer className="mt-8 py-4 text-center text-xs text-gray-500 border-t">
           <p>
-            © 2025{' '}
-            <a 
-              href="https://instagram.com/zziraengi" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-purple-600 hover:text-purple-800 hover:underline"
-            >
-              @zziraengi
-            </a>
-            . All rights reserved.
+            © 2025 zziraengi. All rights reserved.
           </p>
         </footer>
+        </div>
+      </div>
+      
+      {/* AdMob 하단 배너 공간 */}
+      <div className="fixed bottom-0 left-0 right-0 h-[60px] bg-white border-t flex items-center justify-center text-xs text-gray-400 z-50">
+        광고 영역
       </div>
     </div>
   );
