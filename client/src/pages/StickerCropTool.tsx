@@ -910,8 +910,12 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
                   {croppedImages.length === 0 && (
                     <div className="col-span-3 text-center text-gray-400 py-12">
                       <p className="font-semibold mb-2">잘라낸 이미지가 여기에 표시됩니다</p>
-                      <p className="text-sm mt-3">🟡 카카오톡: 1000×1000 (32장) → 360×360 축소</p>
-                      <p className="text-sm">🟢 네이버 OGQ: 1000×1000 (32장) → 메인/탭 생성 → 740×640 변환</p>
+                      {(!fixedPlatform || fixedPlatform === 'kakao') && (
+                        <p className="text-sm mt-3">🟡 카카오톡: 1000×1000 (32장) → 360×360 축소</p>
+                      )}
+                      {(!fixedPlatform || fixedPlatform === 'ogq') && (
+                        <p className="text-sm mt-3">🟢 네이버 OGQ: 1000×1000 (32장) → 메인/탭 생성 → 740×640 변환</p>
+                      )}
                     </div>
                   )}
                 </div>
