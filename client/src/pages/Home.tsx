@@ -42,6 +42,7 @@ export default function Home() {
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const sheetRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -68,6 +69,69 @@ export default function Home() {
       }, 100);
     }
   }, [step, chatOpen]);
+
+  // 스와이프 제스처로 피드백 시트 닫기
+  useEffect(() => {
+    if (!chatOpen) return;
+
+    let startX = 0;
+    let startY = 0;
+    let startTime = 0;
+    let shouldIgnoreSwipe = false;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      startTime = Date.now();
+      
+      const target = e.target as HTMLElement;
+      
+      // 인터랙티브 요소 제외
+      const isInteractiveElement = target.closest('button') !== null ||
+                                   target.closest('input') !== null ||
+                                   target.closest('textarea') !== null ||
+                                   target.closest('a') !== null;
+      
+      shouldIgnoreSwipe = isInteractiveElement;
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (shouldIgnoreSwipe) {
+        return;
+      }
+
+      const endX = e.changedTouches[0].clientX;
+      const endY = e.changedTouches[0].clientY;
+      const endTime = Date.now();
+      
+      const deltaX = endX - startX;
+      const deltaY = endY - startY;
+      const deltaTime = endTime - startTime;
+      
+      // 오른쪽으로 스와이프 (왼쪽 가장자리에서 시작)
+      if (
+        startX < 50 &&
+        deltaX > 100 &&
+        Math.abs(deltaX) > Math.abs(deltaY) * 2 &&
+        deltaTime < 500
+      ) {
+        setChatOpen(false);
+      }
+    };
+
+    const sheet = sheetRef.current;
+    if (sheet) {
+      sheet.addEventListener('touchstart', handleTouchStart, { passive: true });
+      sheet.addEventListener('touchend', handleTouchEnd, { passive: true });
+    }
+
+    return () => {
+      if (sheet) {
+        sheet.removeEventListener('touchstart', handleTouchStart);
+        sheet.removeEventListener('touchend', handleTouchEnd);
+      }
+    };
+  }, [chatOpen]);
 
   const addBotMessage = (content: string) => {
     const newMessage: Message = {
@@ -329,7 +393,7 @@ export default function Home() {
           {/* 피드백 Sheet */}
           <Sheet open={chatOpen} onOpenChange={handleOpenChange}>
 
-            <SheetContent className="w-full sm:max-w-md flex flex-col p-0">
+            <SheetContent ref={sheetRef} className="w-full sm:max-w-md flex flex-col p-0" data-testid="feedback-sheet">
               <SheetHeader className="p-6 pb-4 border-b">
                 <SheetTitle className="flex items-center gap-2">
                   <Bot className="w-6 h-6 text-purple-600" />
