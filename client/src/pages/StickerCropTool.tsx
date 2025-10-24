@@ -666,29 +666,59 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">열 (Columns)</label>
-                      <input
-                        type="number"
-                        min="1"
-                        max="20"
-                        value={gridCols}
-                        onChange={(e) => setGridCols(parseInt(e.target.value) || 4)}
-                        disabled={autoDetectGrid}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                        data-testid="input-grid-cols"
-                      />
+                      <div className="flex items-center gap-2">
+                        <Button
+                          type="button"
+                          data-testid="button-decrease-cols"
+                          onClick={() => setGridCols(Math.max(1, gridCols - 1))}
+                          disabled={autoDetectGrid || gridCols <= 1}
+                          className="px-3 py-2 font-bold text-lg min-w-[44px]"
+                          variant="outline"
+                        >
+                          −
+                        </Button>
+                        <div className="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-white text-center font-semibold text-gray-900">
+                          {gridCols}
+                        </div>
+                        <Button
+                          type="button"
+                          data-testid="button-increase-cols"
+                          onClick={() => setGridCols(Math.min(20, gridCols + 1))}
+                          disabled={autoDetectGrid || gridCols >= 20}
+                          className="px-3 py-2 font-bold text-lg min-w-[44px]"
+                          variant="outline"
+                        >
+                          +
+                        </Button>
+                      </div>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">행 (Rows)</label>
-                      <input
-                        type="number"
-                        min="1"
-                        max="20"
-                        value={gridRows}
-                        onChange={(e) => setGridRows(parseInt(e.target.value) || 8)}
-                        disabled={autoDetectGrid}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                        data-testid="input-grid-rows"
-                      />
+                      <div className="flex items-center gap-2">
+                        <Button
+                          type="button"
+                          data-testid="button-decrease-rows"
+                          onClick={() => setGridRows(Math.max(1, gridRows - 1))}
+                          disabled={autoDetectGrid || gridRows <= 1}
+                          className="px-3 py-2 font-bold text-lg min-w-[44px]"
+                          variant="outline"
+                        >
+                          −
+                        </Button>
+                        <div className="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-white text-center font-semibold text-gray-900">
+                          {gridRows}
+                        </div>
+                        <Button
+                          type="button"
+                          data-testid="button-increase-rows"
+                          onClick={() => setGridRows(Math.min(20, gridRows + 1))}
+                          disabled={autoDetectGrid || gridRows >= 20}
+                          className="px-3 py-2 font-bold text-lg min-w-[44px]"
+                          variant="outline"
+                        >
+                          +
+                        </Button>
+                      </div>
                     </div>
                   </div>
                   <p className="text-xs text-gray-600 mt-2">
