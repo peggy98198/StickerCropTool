@@ -24,7 +24,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { AdMobBanner } from '@/components/admob/AdMobBanner';
 import { ADMOB_CONFIG } from '@/lib/admob-config';
 import { prepareInterstitialAd, showInterstitialAd, isInterstitialReady } from '@/lib/admob-interstitial';
-
+import { downloadImageNative, downloadZipNative } from '@/lib/filesystem-helper';
 interface SortableStickerProps {
   id: string;
   dataUrl: string;
@@ -129,7 +129,7 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
     }
   };
 
-  const detectGridSize = (width: number, height: number) => {
+  const detectGridSize = (img: HTMLImageElement, width: number, height: number) => {
     if (width === 4000 && height === 8000) {
       return { cols: 4, rows: 8 };
     }
@@ -165,7 +165,7 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
         setPlatform(null);
         
         if (autoDetectGrid) {
-          const detected = detectGridSize(img.width, img.height);
+          const detected = detectGridSize(img, img.width, img.height);
           setGridCols(detected.cols);
           setGridRows(detected.rows);
         }
@@ -456,18 +456,16 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
     setIsProcessing(false);
   };
 
-  const downloadImage = (dataUrl: string, index: number) => {
-    const link = document.createElement('a');
-    let sizeLabel = '';
-    if (currentSize === 360) {
-      sizeLabel = '_360';
-    } else if (currentSize === '740×640') {
-      sizeLabel = '_ogq';
-    }
-    link.download = `sticker_${String(index + 1).padStart(2, '0')}${sizeLabel}.png`;
-    link.href = dataUrl;
-    link.click();
-  };
+  const downloadImage = async (dataUrl: string, index: number) => {
+  let sizeLabel = '';
+  if (currentSize === 360) {
+    sizeLabel = '_360';
+  } else if (currentSize === '740×640') {
+    sizeLabel = '_ogq';
+  }
+  const filename = `sticker_${String(index + 1).padStart(2, '0')}${sizeLabel}.png`;
+  await downloadImageNative(dataUrl, filename);
+};
 
   const downloadAll = async () => {
     const zip = new JSZip();
@@ -487,11 +485,8 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
     }
     
     const content = await zip.generateAsync({ type: 'blob' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(content);
-    link.download = `stickers${sizeLabel}.zip`;
-    link.click();
-    URL.revokeObjectURL(link.href);
+const zipFilename = `stickers${sizeLabel}.zip`;
+await downloadZipNative(content, zipFilename);
     
     // 전면 광고 표시 (다운로드 완료 후)
     if (isInterstitialReady()) {
@@ -604,29 +599,59 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">열 (Columns)</label>
-                      <input
-                        type="number"
-                        min="1"
-                        max="20"
-                        value={gridCols}
-                        onChange={(e) => setGridCols(parseInt(e.target.value) || 4)}
-                        disabled={autoDetectGrid}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                        data-testid="input-grid-cols"
-                      />
+                      <div className="flex items-center gap-2">
+  <Button
+    type="button"
+    data-testid="button-decrease-cols"
+    onClick={() => setGridCols(Math.max(1, gridCols - 1))}
+    disabled={autoDetectGrid || gridCols <= 1}
+    className="px-3 py-2 font-bold text-lg min-w-[44px]"
+    variant="outline"
+  >
+    −
+  </Button>
+  <div className="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-white text-center font-semibold text-gray-900">
+    {gridCols}
+  </div>
+  <Button
+    type="button"
+    data-testid="button-increase-cols"
+    onClick={() => setGridCols(Math.min(20, gridCols + 1))}
+    disabled={autoDetectGrid || gridCols >= 20}
+    className="px-3 py-2 font-bold text-lg min-w-[44px]"
+    variant="outline"
+  >
+    +
+  </Button>
+</div>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">행 (Rows)</label>
-                      <input
-                        type="number"
-                        min="1"
-                        max="20"
-                        value={gridRows}
-                        onChange={(e) => setGridRows(parseInt(e.target.value) || 8)}
-                        disabled={autoDetectGrid}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                        data-testid="input-grid-rows"
-                      />
+                      <div className="flex items-center gap-2">
+  <Button
+    type="button"
+    data-testid="button-decrease-rows"
+    onClick={() => setGridRows(Math.max(1, gridRows - 1))}
+    disabled={autoDetectGrid || gridRows <= 1}
+    className="px-3 py-2 font-bold text-lg min-w-[44px]"
+    variant="outline"
+  >
+    −
+  </Button>
+  <div className="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-white text-center font-semibold text-gray-900">
+    {gridRows}
+  </div>
+  <Button
+    type="button"
+    data-testid="button-increase-rows"
+    onClick={() => setGridRows(Math.min(20, gridRows + 1))}
+    disabled={autoDetectGrid || gridRows >= 20}
+    className="px-3 py-2 font-bold text-lg min-w-[44px]"
+    variant="outline"
+  >
+    +
+  </Button>
+</div>
                     </div>
                   </div>
                   <p className="text-xs text-gray-600 mt-2">
@@ -787,12 +812,7 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
                       />
                       <Button
                         data-testid="button-download-main"
-                        onClick={() => {
-                          const link = document.createElement('a');
-                          link.download = 'ogq_main_240x240.png';
-                          link.href = ogqMainImage;
-                          link.click();
-                        }}
+                        onClick={() => downloadImageNative(ogqMainImage, 'ogq_main_240x240.png')}
                         className="w-full py-2 px-3 text-sm"
                         style={{ backgroundColor: 'hsl(217, 91%, 60%)', color: 'white' }}
                       >
@@ -814,12 +834,7 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
                       />
                       <Button
                         data-testid="button-download-tab"
-                        onClick={() => {
-                          const link = document.createElement('a');
-                          link.download = 'ogq_tab_96x74.png';
-                          link.href = ogqTabImage;
-                          link.click();
-                        }}
+                        onClick={() => downloadImageNative(ogqTabImage, 'ogq_tab_96x74.png')}
                         className="w-full py-2 px-3 text-sm"
                         style={{ backgroundColor: 'hsl(142, 71%, 45%)', color: 'white' }}
                       >
@@ -842,9 +857,10 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
                 )}
               </h2>
               {croppedImages.length > 0 && (
-                <div className="flex gap-2">
-                  <Button
-                    data-testid="button-chat-preview"
+  <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+    {isKakaoMode && (
+      <Button
+        data-testid="button-chat-preview"
                     onClick={() => setShowChatPreview(!showChatPreview)}
                     className="py-2 px-4 flex items-center gap-2"
                     style={{ backgroundColor: showChatPreview ? 'hsl(142, 71%, 45%)' : 'hsl(217, 91%, 60%)', color: 'white' }}
@@ -856,8 +872,10 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
                       className={`transform transition-transform duration-200 ${showChatPreview ? 'rotate-180' : 'rotate-0'}`}
                     />
                   </Button>
-                  <Button
-                    data-testid="button-download-all"
+)}
+                      {(isKakaoMode || isOgqMode) && (
+      <Button
+        data-testid="button-download-all"
                     onClick={downloadAll}
                     className="py-2 px-4"
                     style={{ backgroundColor: 'hsl(262, 52%, 47%)', color: 'white' }}
@@ -865,6 +883,7 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
                     <Download size={18} />
                     전체 다운로드
                   </Button>
+)}
                 </div>
               )}
             </div>
