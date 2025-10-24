@@ -1,7 +1,5 @@
 import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
-import { Camera } from '@capacitor/camera';
-import { Share } from '@capacitor/share';
 
 export async function downloadImageNative(dataUrl: string, filename: string): Promise<void> {
   if (!Capacitor.isNativePlatform()) {
@@ -15,35 +13,17 @@ export async function downloadImageNative(dataUrl: string, filename: string): Pr
   try {
     const base64Data = dataUrl.split(',')[1];
     
-    await Camera.checkPermissions();
-    const permissionStatus = await Camera.requestPermissions({ permissions: ['photos'] });
-    
-    if (permissionStatus.photos === 'denied') {
-      alert('사진 라이브러리 접근 권한이 필요합니다');
-      return;
-    }
-    
     const result = await Filesystem.writeFile({
       path: filename,
       data: base64Data,
-      directory: Directory.Cache,
+      directory: Directory.Documents,
     });
-    
-    const savedFile = await Filesystem.readFile({
-      path: filename,
-      directory: Directory.Cache,
-    });
-    
-    await Share.share({
-      title: '스티커 저장',
-      text: filename,
-      url: result.uri,
-      dialogTitle: '스티커 공유 또는 저장',
-    });
-    
+
+    console.log('File saved to:', result.uri);
+    alert(`저장 완료: ${filename}`);
   } catch (error) {
     console.error('File save error:', error);
-    alert('저장 실패');
+    alert('파일 저장 실패');
   }
 }
 
@@ -69,16 +49,11 @@ export async function downloadZipNative(blob: Blob, filename: string): Promise<v
           const result = await Filesystem.writeFile({
             path: filename,
             data: base64Data,
-            directory: Directory.Cache,
+            directory: Directory.Documents,
           });
 
-          await Share.share({
-            title: 'ZIP 파일 저장',
-            text: filename,
-            url: result.uri,
-            dialogTitle: 'ZIP 파일 공유 또는 저장',
-          });
-          
+          console.log('ZIP file saved to:', result.uri);
+          alert(`ZIP 파일 저장 완료: ${filename}`);
           resolve();
         } catch (error) {
           reject(error);
@@ -89,6 +64,6 @@ export async function downloadZipNative(blob: Blob, filename: string): Promise<v
     });
   } catch (error) {
     console.error('ZIP save error:', error);
-    alert('ZIP 저장 실패');
+    alert('ZIP 파일 저장 실패');
   }
 }
