@@ -5,7 +5,11 @@ const config: CapacitorConfig = {
   appName: '스티커 크롭',
   webDir: 'dist/public',
   server: {
-    androidScheme: 'https'
+    androidScheme: 'https',
+    iosScheme: 'capacitor'
+  },
+  ios: {
+    contentInset: 'always'
   },
   plugins: {
     SplashScreen: {
