@@ -24,6 +24,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { AdMobBanner } from '@/components/admob/AdMobBanner';
 import { ADMOB_CONFIG } from '@/lib/admob-config';
 import { prepareInterstitialAd, showInterstitialAd, isInterstitialReady } from '@/lib/admob-interstitial';
+import { downloadImageNative, downloadZipNative } from '@/lib/filesystem-helper';
 
 interface SortableStickerProps {
   id: string;
@@ -129,7 +130,7 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
     }
   };
 
-  const detectGridSize = (width: number, height: number) => {
+  const detectGridSize = (img: HTMLImageElement, width: number, height: number) => {
     if (width === 4000 && height === 8000) {
       return { cols: 4, rows: 8 };
     }
@@ -150,7 +151,7 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
       return detectedCols > 0 && detectedRows > 0 ? { cols: detectedCols, rows: detectedRows } : { cols: 4, rows: 8 };
     }
     
-    ctx.drawImage(image!, 0, 0);
+    ctx.drawImage(img, 0, 0);
     const imageData = ctx.getImageData(0, 0, width, height);
     const data = imageData.data;
     
@@ -227,7 +228,7 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
         setPlatform(null);
         
         if (autoDetectGrid) {
-          const detected = detectGridSize(img.width, img.height);
+          const detected = detectGridSize(img, img.width, img.height);
           setGridCols(detected.cols);
           setGridRows(detected.rows);
         }
@@ -518,17 +519,15 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
     setIsProcessing(false);
   };
 
-  const downloadImage = (dataUrl: string, index: number) => {
-    const link = document.createElement('a');
+  const downloadImage = async (dataUrl: string, index: number) => {
     let sizeLabel = '';
     if (currentSize === 360) {
       sizeLabel = '_360';
     } else if (currentSize === '740×640') {
       sizeLabel = '_ogq';
     }
-    link.download = `sticker_${String(index + 1).padStart(2, '0')}${sizeLabel}.png`;
-    link.href = dataUrl;
-    link.click();
+    const filename = `sticker_${String(index + 1).padStart(2, '0')}${sizeLabel}.png`;
+    await downloadImageNative(dataUrl, filename);
   };
 
   const downloadAll = async () => {
@@ -549,11 +548,8 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
     }
     
     const content = await zip.generateAsync({ type: 'blob' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(content);
-    link.download = `stickers${sizeLabel}.zip`;
-    link.click();
-    URL.revokeObjectURL(link.href);
+    const zipFilename = `stickers${sizeLabel}.zip`;
+    await downloadZipNative(content, zipFilename);
     
     // 전면 광고 표시 (다운로드 완료 후)
     if (isInterstitialReady()) {
@@ -879,12 +875,7 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
                       />
                       <Button
                         data-testid="button-download-main"
-                        onClick={() => {
-                          const link = document.createElement('a');
-                          link.download = 'ogq_main_240x240.png';
-                          link.href = ogqMainImage;
-                          link.click();
-                        }}
+                        onClick={() => downloadImageNative(ogqMainImage, 'ogq_main_240x240.png')}
                         className="w-full py-2 px-3 text-sm"
                         style={{ backgroundColor: 'hsl(217, 91%, 60%)', color: 'white' }}
                       >
@@ -906,12 +897,7 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
                       />
                       <Button
                         data-testid="button-download-tab"
-                        onClick={() => {
-                          const link = document.createElement('a');
-                          link.download = 'ogq_tab_96x74.png';
-                          link.href = ogqTabImage;
-                          link.click();
-                        }}
+                        onClick={() => downloadImageNative(ogqTabImage, 'ogq_tab_96x74.png')}
                         className="w-full py-2 px-3 text-sm"
                         style={{ backgroundColor: 'hsl(142, 71%, 45%)', color: 'white' }}
                       >
