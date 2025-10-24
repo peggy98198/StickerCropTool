@@ -12,7 +12,7 @@ export function HelpButton() {
       size="icon"
       variant="secondary"
       onClick={handleClick}
-      className="fixed bottom-6 left-4 z-40 h-12 w-12 rounded-full shadow-lg bg-card/80 backdrop-blur-sm hover:bg-card border border-border"
+      className="fixed bottom-6 left-6 z-40 h-12 w-12 rounded-full shadow-lg bg-card/80 backdrop-blur-sm hover:bg-card border border-border"
       data-testid="button-help"
       aria-label="도움말 보기"
     >
