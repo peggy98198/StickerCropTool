@@ -38,6 +38,18 @@ function App() {
     }
   }, []);
 
+  // 커스텀 이벤트 리스너 등록 (도움말 버튼에서 온보딩 재표시)
+  useEffect(() => {
+    const handleShowOnboarding = () => {
+      setShowOnboarding(true);
+    };
+
+    window.addEventListener('show-onboarding', handleShowOnboarding);
+    return () => {
+      window.removeEventListener('show-onboarding', handleShowOnboarding);
+    };
+  }, []);
+
   const handleOnboardingComplete = () => {
     localStorage.setItem(ONBOARDING_KEY, "true");
     setShowOnboarding(false);
@@ -106,12 +118,6 @@ function App() {
       </TooltipProvider>
     </QueryClientProvider>
   );
-}
-
-// 온보딩을 다시 보여주는 함수 (도움말 버튼에서 사용)
-export function resetOnboarding() {
-  localStorage.removeItem(ONBOARDING_KEY);
-  window.location.reload();
 }
 
 export default App;

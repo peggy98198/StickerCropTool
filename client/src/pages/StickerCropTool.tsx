@@ -1,9 +1,10 @@
-import { useState, useRef } from 'react';
-import { Upload, Download, MessageCircle, ZoomOut, GripVertical, MessageSquare, X, ChevronDown, Home } from 'lucide-react';
-import { Link } from 'wouter';
+import { useState, useRef, useEffect } from 'react';
+import { Upload, Download, MessageCircle, ZoomOut, GripVertical, MessageSquare, X, ChevronDown, ArrowLeft } from 'lucide-react';
+import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { HelpButton } from '@/components/HelpButton';
+import { useToast } from '@/hooks/use-toast';
 import JSZip from 'jszip';
 import {
   DndContext,
@@ -96,6 +97,8 @@ interface StickerCropToolProps {
 }
 
 export default function StickerCropTool({ platform: fixedPlatform }: StickerCropToolProps = {}) {
+  const [location, setLocation] = useLocation();
+  const { toast } = useToast();
   const [image, setImage] = useState<HTMLImageElement | null>(null);
   const [croppedImages, setCroppedImages] = useState<string[]>([]);
   const [currentSize, setCurrentSize] = useState<number | string>(1000);
@@ -111,6 +114,7 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
   const [autoDetectGrid, setAutoDetectGrid] = useState(true);
   const [showChatPreview, setShowChatPreview] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -130,6 +134,77 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
       });
     }
   };
+
+  // 스와이프 제스처로 뒤로가기 (DnD와 충돌 방지)
+  useEffect(() => {
+    let startX = 0;
+    let startY = 0;
+    let startTime = 0;
+    let shouldIgnoreSwipe = false;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      startTime = Date.now();
+      
+      // 터치가 스티커 그리드 영역이나 인터랙티브 요소에서 시작되었는지 확인
+      const target = e.target as HTMLElement;
+      
+      // 스티커 그리드 영역만 제외 (data-testid="sticker-grid"를 가진 요소 또는 그 자식)
+      const isInStickerGrid = target.closest('[data-testid="sticker-grid"]') !== null;
+      
+      // 버튼, 인풋 등 인터랙티브 요소 제외
+      const isInteractiveElement = target.closest('button') !== null ||
+                                   target.closest('input') !== null ||
+                                   target.closest('textarea') !== null ||
+                                   target.closest('a') !== null;
+      
+      shouldIgnoreSwipe = isInStickerGrid || isInteractiveElement;
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      // 스티커 그리드나 DnD 요소에서 시작된 터치는 무시
+      if (shouldIgnoreSwipe) {
+        return;
+      }
+
+      const endX = e.changedTouches[0].clientX;
+      const endY = e.changedTouches[0].clientY;
+      const endTime = Date.now();
+      
+      const deltaX = endX - startX;
+      const deltaY = endY - startY;
+      const deltaTime = endTime - startTime;
+      
+      // 오른쪽으로 스와이프 (왼쪽 가장자리에서 시작, 100px 이상 이동, 수평 방향이 우세)
+      if (
+        startX < 50 && // 왼쪽 가장자리에서 시작
+        deltaX > 100 && // 오른쪽으로 100px 이상
+        Math.abs(deltaX) > Math.abs(deltaY) * 2 && // 수평 이동이 수직 이동의 2배 이상
+        deltaTime < 500 // 0.5초 이내
+      ) {
+        // 뒤로가기
+        if (window.history.length > 1) {
+          window.history.back();
+        } else {
+          setLocation('/');
+        }
+      }
+    };
+
+    const container = containerRef.current;
+    if (container) {
+      container.addEventListener('touchstart', handleTouchStart, { passive: true });
+      container.addEventListener('touchend', handleTouchEnd, { passive: true });
+    }
+
+    return () => {
+      if (container) {
+        container.removeEventListener('touchstart', handleTouchStart);
+        container.removeEventListener('touchend', handleTouchEnd);
+      }
+    };
+  }, [setLocation]);
 
   const detectGridSize = (img: HTMLImageElement, width: number, height: number) => {
     if (width === 4000 && height === 8000) {
@@ -521,36 +596,68 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
   };
 
   const downloadImage = async (dataUrl: string, index: number) => {
-    let sizeLabel = '';
-    if (currentSize === 360) {
-      sizeLabel = '_360';
-    } else if (currentSize === '740×640') {
-      sizeLabel = '_ogq';
+    try {
+      let sizeLabel = '';
+      if (currentSize === 360) {
+        sizeLabel = '_360';
+      } else if (currentSize === '740×640') {
+        sizeLabel = '_ogq';
+      }
+      const filename = `sticker_${String(index + 1).padStart(2, '0')}${sizeLabel}.png`;
+      await downloadImageNative(dataUrl, filename);
+      toast({
+        title: "다운로드 완료",
+        description: `${filename}이(가) 저장되었습니다.`,
+      });
+    } catch (error) {
+      console.error('Download error:', error);
+      toast({
+        title: "다운로드 실패",
+        description: "파일 저장 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
     }
-    const filename = `sticker_${String(index + 1).padStart(2, '0')}${sizeLabel}.png`;
-    await downloadImageNative(dataUrl, filename);
   };
 
   const downloadAll = async () => {
-    const zip = new JSZip();
-    
-    let sizeLabel = '';
-    if (currentSize === 360) {
-      sizeLabel = '_360';
-    } else if (currentSize === '740×640') {
-      sizeLabel = '_ogq';
+    try {
+      toast({
+        title: "ZIP 파일 생성 중...",
+        description: "잠시만 기다려주세요.",
+      });
+
+      const zip = new JSZip();
+      
+      let sizeLabel = '';
+      if (currentSize === 360) {
+        sizeLabel = '_360';
+      } else if (currentSize === '740×640') {
+        sizeLabel = '_ogq';
+      }
+      
+      for (let i = 0; i < croppedImages.length; i++) {
+        const dataUrl = croppedImages[i];
+        const base64Data = dataUrl.split(',')[1];
+        const filename = `sticker_${String(i + 1).padStart(2, '0')}${sizeLabel}.png`;
+        zip.file(filename, base64Data, { base64: true });
+      }
+      
+      const content = await zip.generateAsync({ type: 'blob' });
+      const zipFilename = `stickers${sizeLabel}.zip`;
+      await downloadZipNative(content, zipFilename);
+      
+      toast({
+        title: "다운로드 완료",
+        description: `${zipFilename}이(가) 저장되었습니다.`,
+      });
+    } catch (error) {
+      console.error('Download all error:', error);
+      toast({
+        title: "다운로드 실패",
+        description: "ZIP 파일 저장 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
     }
-    
-    for (let i = 0; i < croppedImages.length; i++) {
-      const dataUrl = croppedImages[i];
-      const base64Data = dataUrl.split(',')[1];
-      const filename = `sticker_${String(i + 1).padStart(2, '0')}${sizeLabel}.png`;
-      zip.file(filename, base64Data, { base64: true });
-    }
-    
-    const content = await zip.generateAsync({ type: 'blob' });
-    const zipFilename = `stickers${sizeLabel}.zip`;
-    await downloadZipNative(content, zipFilename);
     
     // 전면 광고 표시 (다운로드 완료 후)
     if (isInterstitialReady()) {
@@ -562,11 +669,47 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
     }
   };
 
+  const handleDownloadOgqMain = async () => {
+    if (!ogqMainImage) return;
+    try {
+      await downloadImageNative(ogqMainImage, 'ogq_main_240x240.png');
+      toast({
+        title: "다운로드 완료",
+        description: "ogq_main_240x240.png이(가) 저장되었습니다.",
+      });
+    } catch (error) {
+      console.error('OGQ Main download error:', error);
+      toast({
+        title: "다운로드 실패",
+        description: "파일 저장 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDownloadOgqTab = async () => {
+    if (!ogqTabImage) return;
+    try {
+      await downloadImageNative(ogqTabImage, 'ogq_tab_96x74.png');
+      toast({
+        title: "다운로드 완료",
+        description: "ogq_tab_96x74.png이(가) 저장되었습니다.",
+      });
+    } catch (error) {
+      console.error('OGQ Tab download error:', error);
+      toast({
+        title: "다운로드 실패",
+        description: "파일 저장 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const isKakaoMode = fixedPlatform === 'kakao' || (!fixedPlatform && platform === 'kakao');
   const isOgqMode = fixedPlatform === 'ogq' || (!fixedPlatform && platform === 'ogq');
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
+    <div ref={containerRef} className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
       {/* 도움말 버튼 */}
       <HelpButton />
       
@@ -581,12 +724,21 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
         <div className="max-w-6xl mx-auto">
         {fixedPlatform && (
           <div className="mb-4">
-            <Link href="/">
-              <Button variant="outline" className="gap-2" data-testid="button-home">
-                <Home size={18} />
-                홈으로
-              </Button>
-            </Link>
+            <Button 
+              variant="outline" 
+              className="gap-2" 
+              data-testid="button-back"
+              onClick={() => {
+                if (window.history.length > 1) {
+                  window.history.back();
+                } else {
+                  setLocation('/');
+                }
+              }}
+            >
+              <ArrowLeft size={18} />
+              뒤로가기
+            </Button>
           </div>
         )}
         <div className="text-center mb-8">
@@ -879,7 +1031,7 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
                       />
                       <Button
                         data-testid="button-download-main"
-                        onClick={() => downloadImageNative(ogqMainImage, 'ogq_main_240x240.png')}
+                        onClick={handleDownloadOgqMain}
                         className="w-full py-2 px-3 text-sm"
                         style={{ backgroundColor: 'hsl(217, 91%, 60%)', color: 'white' }}
                       >
@@ -901,7 +1053,7 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
                       />
                       <Button
                         data-testid="button-download-tab"
-                        onClick={() => downloadImageNative(ogqTabImage, 'ogq_tab_96x74.png')}
+                        onClick={handleDownloadOgqTab}
                         className="w-full py-2 px-3 text-sm"
                         style={{ backgroundColor: 'hsl(142, 71%, 45%)', color: 'white' }}
                       >
@@ -1009,7 +1161,7 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
                 items={croppedImages.map((_, i) => `sticker-${i}`)}
                 strategy={rectSortingStrategy}
               >
-                <div className="grid grid-cols-3 gap-3 max-h-[600px] overflow-y-auto">
+                <div className="grid grid-cols-3 gap-3 max-h-[600px] overflow-y-auto" data-testid="sticker-grid">
                   {croppedImages.map((dataUrl, index) => (
                     <SortableSticker
                       key={`sticker-${index}`}

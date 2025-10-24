@@ -167,19 +167,15 @@ export default function Home() {
       <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 md:px-8 py-4 flex items-center justify-between">
           <div className="w-10"></div>
-          <h1 className="text-3xl font-bold text-gray-800 flex-1 text-center">이모티콘 절단기</h1>
+          <h1 className="text-2xl font-bold text-gray-800 flex-1 text-center">이모티콘 절단기</h1>
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" data-testid="button-menu">
-                <Menu size={24} />
+                <Menu size={28} />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={() => setGuideOpen(true)} data-testid="menu-guide">
-                <HelpCircle className="mr-2 h-4 w-4" />
-                <span>사용 방법</span>
-              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setChatOpen(true)} data-testid="menu-feedback">
                 <MessageCircle className="mr-2 h-4 w-4" />
                 <span>피드백 보내기</span>
