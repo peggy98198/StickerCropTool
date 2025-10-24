@@ -11,7 +11,7 @@ import Home from "@/pages/Home";
 import StickerCropTool from "@/pages/StickerCropTool";
 import { addInterstitialListeners, removeInterstitialListeners } from "@/lib/admob-interstitial";
 import { ADMOB_CONFIG } from "@/lib/admob-config";
-import { Onboarding } from "@/components/Onboarding";
+import { Onboarding } from "@/components/Onboarding.tsx";
 
 function Router() {
   return (
