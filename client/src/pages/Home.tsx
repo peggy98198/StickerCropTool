@@ -2,6 +2,7 @@ import { Link } from 'wouter';
 import { MessageCircle, Menu, Send, Bot, User, HelpCircle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { HelpButton } from '@/components/HelpButton';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -159,6 +160,9 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
+      {/* 도움말 버튼 */}
+      <HelpButton />
+      
       {/* 헤더 */}
       <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 md:px-8 py-4 flex items-center justify-between">

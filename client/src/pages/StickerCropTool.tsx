@@ -3,6 +3,7 @@ import { Upload, Download, MessageCircle, ZoomOut, GripVertical, MessageSquare, 
 import { Link } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { HelpButton } from '@/components/HelpButton';
 import JSZip from 'jszip';
 import {
   DndContext,
@@ -566,6 +567,9 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
+      {/* 도움말 버튼 */}
+      <HelpButton />
+      
       {/* AdMob 상단 배너 */}
       <AdMobBanner 
         adId={ADMOB_CONFIG.BANNER_TOP_ID} 
