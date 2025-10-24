@@ -138,15 +138,77 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
       return { cols: 4, rows: 4 };
     }
     
-    const stickerSize = 1000;
-    const detectedCols = Math.floor(width / stickerSize);
-    const detectedRows = Math.floor(height / stickerSize);
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
     
-    if (detectedCols > 0 && detectedRows > 0) {
-      return { cols: detectedCols, rows: detectedRows };
+    if (!ctx) {
+      const stickerSize = 1000;
+      const detectedCols = Math.floor(width / stickerSize);
+      const detectedRows = Math.floor(height / stickerSize);
+      return detectedCols > 0 && detectedRows > 0 ? { cols: detectedCols, rows: detectedRows } : { cols: 4, rows: 8 };
     }
     
-    return { cols: 4, rows: 8 };
+    ctx.drawImage(image!, 0, 0);
+    const imageData = ctx.getImageData(0, 0, width, height);
+    const data = imageData.data;
+    
+    let detectedCols = 0;
+    let detectedRows = 0;
+    
+    const scanInterval = Math.floor(width / 100);
+    const threshold = 30;
+    
+    for (let x = scanInterval; x < width - scanInterval; x += scanInterval) {
+      let verticalEdgeCount = 0;
+      for (let y = 1; y < height - 1; y++) {
+        const idx = (y * width + x) * 4;
+        const prevIdx = ((y - 1) * width + x) * 4;
+        
+        const currentBrightness = (data[idx] + data[idx + 1] + data[idx + 2]) / 3;
+        const prevBrightness = (data[prevIdx] + data[prevIdx + 1] + data[prevIdx + 2]) / 3;
+        
+        if (Math.abs(currentBrightness - prevBrightness) > threshold) {
+          verticalEdgeCount++;
+        }
+      }
+      
+      if (verticalEdgeCount > height * 0.3) {
+        detectedCols++;
+      }
+    }
+    
+    for (let y = scanInterval; y < height - scanInterval; y += scanInterval) {
+      let horizontalEdgeCount = 0;
+      for (let x = 1; x < width - 1; x++) {
+        const idx = (y * width + x) * 4;
+        const prevIdx = (y * width + (x - 1)) * 4;
+        
+        const currentBrightness = (data[idx] + data[idx + 1] + data[idx + 2]) / 3;
+        const prevBrightness = (data[prevIdx] + data[prevIdx + 1] + data[prevIdx + 2]) / 3;
+        
+        if (Math.abs(currentBrightness - prevBrightness) > threshold) {
+          horizontalEdgeCount++;
+        }
+      }
+      
+      if (horizontalEdgeCount > width * 0.3) {
+        detectedRows++;
+      }
+    }
+    
+    detectedCols = Math.max(1, Math.round(detectedCols / 10));
+    detectedRows = Math.max(1, Math.round(detectedRows / 10));
+    
+    if (detectedCols < 2 || detectedRows < 2 || detectedCols > 10 || detectedRows > 20) {
+      const stickerSize = 1000;
+      const fallbackCols = Math.floor(width / stickerSize);
+      const fallbackRows = Math.floor(height / stickerSize);
+      return fallbackCols > 0 && fallbackRows > 0 ? { cols: fallbackCols, rows: fallbackRows } : { cols: 4, rows: 8 };
+    }
+    
+    return { cols: detectedCols, rows: detectedRows };
   };
 
   const loadImageFromFile = (file: File) => {
