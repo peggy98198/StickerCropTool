@@ -1,0 +1,88 @@
+Last login: Fri Oct 24 12:07:02 on ttys001
+➜  ~ cd ~/Documents/StickerCropTool
+npm run build
+
+> rest-express@1.0.0 build
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+
+vite v5.4.20 building for production...
+transforming (3) src/main.tsxBrowserslist: browsers data (caniuse-lite) is 12 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+
+A PostCSS plugin did not pass the `from` option to `postcss.parse`. This may cause imported assets to be incorrectly transformed. If you've recently added a PostCSS plugin that raised this warning, please contact the package author to fix the issue.
+✓ 1759 modules transformed.
+../dist/public/index.html                   0.75 kB │ gzip:   0.57 kB
+../dist/public/assets/index-CLb5PAOy.css   76.79 kB │ gzip:  12.51 kB
+../dist/public/assets/web-CSLEcgZq.js       0.76 kB │ gzip:   0.35 kB
+../dist/public/assets/web-RW7rZMtO.js       1.26 kB │ gzip:   0.43 kB
+../dist/public/assets/index-2H1nxov6.js   504.02 kB │ gzip: 160.29 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 1.38s
+
+  dist/index.js  4.6kb
+
+⚡ Done in 12ms
+➜  StickerCropTool git:(main) ✗ npx cap sync ios
+✔ Copying web assets from public to ios/App/App/public in 2.75ms
+✔ Creating capacitor.config.json in ios/App/App in 557.92μs
+✔ copy ios in 31.13ms
+✔ Updating iOS plugins in 5.49ms
+✔ Updating iOS native dependencies with pod install in 2.53s
+[info] Found 2 Capacitor plugins for ios:
+       @capacitor-community/admob@7.0.3
+       @capacitor/app@7.1.0
+✔ update ios in 2.56s
+[info] Sync finished in 2.844s
+➜  StickerCropTool git:(main) ✗ cd ios/App
+open App.xcworkspace
+➜  App git:(main) ✗ cd ~/Documents/StickerCropTool
+
+➜  StickerCropTool git:(main) ✗ npm run build
+
+
+> rest-express@1.0.0 build
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+
+vite v5.4.20 building for production...
+transforming (2) ../vite/modulepreload-polyfill.jsBrowserslist: browsers data (caniuse-lite) is 12 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+transforming (4) src/App.tsx
+A PostCSS plugin did not pass the `from` option to `postcss.parse`. This may cause imported assets to be incorrectly transformed. If you've recently added a PostCSS plugin that raised this warning, please contact the package author to fix the issue.
+✓ 1759 modules transformed.
+../dist/public/index.html                   0.75 kB │ gzip:   0.57 kB
+../dist/public/assets/index-CLb5PAOy.css   76.79 kB │ gzip:  12.51 kB
+../dist/public/assets/web-CSLEcgZq.js       0.76 kB │ gzip:   0.35 kB
+../dist/public/assets/web-RW7rZMtO.js       1.26 kB │ gzip:   0.43 kB
+../dist/public/assets/index-2H1nxov6.js   504.02 kB │ gzip: 160.29 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 1.32s
+
+  dist/index.js  4.6kb
+
+⚡ Done in 5ms
+➜  StickerCropTool git:(main) ✗ npx cap sync ios
+✔ Copying web assets from public to ios/App/App/public in 2.94ms
+✔ Creating capacitor.config.json in ios/App/App in 419.71μs
+✔ copy ios in 32.05ms
+✔ Updating iOS plugins in 5.35ms
+✔ Updating iOS native dependencies with pod install in 2.46s
+[info] Found 2 Capacitor plugins for ios:
+       @capacitor-community/admob@7.0.3
+       @capacitor/app@7.1.0
+✔ update ios in 2.49s
+[info] Sync finished in 2.781s
+➜  StickerCropTool git:(main) ✗ cd ios/App
+open App.xcworkspace
+➜  App git:(main) ✗ ls ~/Documents/StickerCropTool/dist
+index.js public
+➜  App git:(main) ✗ 
