@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -11,6 +11,7 @@ import Home from "@/pages/Home";
 import StickerCropTool from "@/pages/StickerCropTool";
 import { addInterstitialListeners, removeInterstitialListeners } from "@/lib/admob-interstitial";
 import { ADMOB_CONFIG } from "@/lib/admob-config";
+import { Onboarding } from "@/components/Onboarding";
 
 function Router() {
   return (
@@ -23,8 +24,24 @@ function Router() {
   );
 }
 
+const ONBOARDING_KEY = "sticker-crop-onboarding-completed";
+
 function App() {
   const [location, setLocation] = useLocation();
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  // 온보딩 완료 여부 확인
+  useEffect(() => {
+    const hasSeenOnboarding = localStorage.getItem(ONBOARDING_KEY);
+    if (!hasSeenOnboarding) {
+      setShowOnboarding(true);
+    }
+  }, []);
+
+  const handleOnboardingComplete = () => {
+    localStorage.setItem(ONBOARDING_KEY, "true");
+    setShowOnboarding(false);
+  };
 
   useEffect(() => {
     // 네이티브 플랫폼에서만 실행
@@ -84,10 +101,17 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
+        {showOnboarding && <Onboarding onComplete={handleOnboardingComplete} />}
         <Router />
       </TooltipProvider>
     </QueryClientProvider>
   );
+}
+
+// 온보딩을 다시 보여주는 함수 (도움말 버튼에서 사용)
+export function resetOnboarding() {
+  localStorage.removeItem(ONBOARDING_KEY);
+  window.location.reload();
 }
 
 export default App;
