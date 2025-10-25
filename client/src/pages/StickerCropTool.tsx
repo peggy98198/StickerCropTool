@@ -1,8 +1,10 @@
-import { useState, useRef } from 'react';
-import { Upload, Download, MessageCircle, ZoomOut, GripVertical, MessageSquare, X, ChevronDown, Home } from 'lucide-react';
-import { Link } from 'wouter';
+import { useState, useRef, useEffect } from 'react';
+import { Upload, Download, MessageCircle, ZoomOut, GripVertical, MessageSquare, X, ChevronDown, ArrowLeft } from 'lucide-react';
+import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { HelpButton } from '@/components/HelpButton';
+import { useToast } from '@/hooks/use-toast';
 import JSZip from 'jszip';
 import {
   DndContext,
@@ -25,6 +27,7 @@ import { AdMobBanner } from '@/components/admob/AdMobBanner';
 import { ADMOB_CONFIG } from '@/lib/admob-config';
 import { prepareInterstitialAd, showInterstitialAd, isInterstitialReady } from '@/lib/admob-interstitial';
 import { downloadImageNative, downloadZipNative } from '@/lib/filesystem-helper';
+
 interface SortableStickerProps {
   id: string;
   dataUrl: string;
@@ -94,6 +97,8 @@ interface StickerCropToolProps {
 }
 
 export default function StickerCropTool({ platform: fixedPlatform }: StickerCropToolProps = {}) {
+  const [location, setLocation] = useLocation();
+  const { toast } = useToast();
   const [image, setImage] = useState<HTMLImageElement | null>(null);
   const [croppedImages, setCroppedImages] = useState<string[]>([]);
   const [currentSize, setCurrentSize] = useState<number | string>(1000);
@@ -109,6 +114,7 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
   const [autoDetectGrid, setAutoDetectGrid] = useState(true);
   const [showChatPreview, setShowChatPreview] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -129,6 +135,77 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
     }
   };
 
+  // 스와이프 제스처로 뒤로가기 (DnD와 충돌 방지)
+  useEffect(() => {
+    let startX = 0;
+    let startY = 0;
+    let startTime = 0;
+    let shouldIgnoreSwipe = false;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      startTime = Date.now();
+      
+      // 터치가 스티커 그리드 영역이나 인터랙티브 요소에서 시작되었는지 확인
+      const target = e.target as HTMLElement;
+      
+      // 스티커 그리드 영역만 제외 (data-testid="sticker-grid"를 가진 요소 또는 그 자식)
+      const isInStickerGrid = target.closest('[data-testid="sticker-grid"]') !== null;
+      
+      // 버튼, 인풋 등 인터랙티브 요소 제외
+      const isInteractiveElement = target.closest('button') !== null ||
+                                   target.closest('input') !== null ||
+                                   target.closest('textarea') !== null ||
+                                   target.closest('a') !== null;
+      
+      shouldIgnoreSwipe = isInStickerGrid || isInteractiveElement;
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      // 스티커 그리드나 DnD 요소에서 시작된 터치는 무시
+      if (shouldIgnoreSwipe) {
+        return;
+      }
+
+      const endX = e.changedTouches[0].clientX;
+      const endY = e.changedTouches[0].clientY;
+      const endTime = Date.now();
+      
+      const deltaX = endX - startX;
+      const deltaY = endY - startY;
+      const deltaTime = endTime - startTime;
+      
+      // 오른쪽으로 스와이프 (왼쪽 가장자리에서 시작, 100px 이상 이동, 수평 방향이 우세)
+      if (
+        startX < 50 && // 왼쪽 가장자리에서 시작
+        deltaX > 100 && // 오른쪽으로 100px 이상
+        Math.abs(deltaX) > Math.abs(deltaY) * 2 && // 수평 이동이 수직 이동의 2배 이상
+        deltaTime < 500 // 0.5초 이내
+      ) {
+        // 뒤로가기
+        if (window.history.length > 1) {
+          window.history.back();
+        } else {
+          setLocation('/');
+        }
+      }
+    };
+
+    const container = containerRef.current;
+    if (container) {
+      container.addEventListener('touchstart', handleTouchStart, { passive: true });
+      container.addEventListener('touchend', handleTouchEnd, { passive: true });
+    }
+
+    return () => {
+      if (container) {
+        container.removeEventListener('touchstart', handleTouchStart);
+        container.removeEventListener('touchend', handleTouchEnd);
+      }
+    };
+  }, [setLocation]);
+
   const detectGridSize = (img: HTMLImageElement, width: number, height: number) => {
     if (width === 4000 && height === 8000) {
       return { cols: 4, rows: 8 };
@@ -138,15 +215,77 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
       return { cols: 4, rows: 4 };
     }
     
-    const stickerSize = 1000;
-    const detectedCols = Math.floor(width / stickerSize);
-    const detectedRows = Math.floor(height / stickerSize);
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
     
-    if (detectedCols > 0 && detectedRows > 0) {
-      return { cols: detectedCols, rows: detectedRows };
+    if (!ctx) {
+      const stickerSize = 1000;
+      const detectedCols = Math.floor(width / stickerSize);
+      const detectedRows = Math.floor(height / stickerSize);
+      return detectedCols > 0 && detectedRows > 0 ? { cols: detectedCols, rows: detectedRows } : { cols: 4, rows: 8 };
     }
     
-    return { cols: 4, rows: 8 };
+    ctx.drawImage(img, 0, 0);
+    const imageData = ctx.getImageData(0, 0, width, height);
+    const data = imageData.data;
+    
+    let detectedCols = 0;
+    let detectedRows = 0;
+    
+    const scanInterval = Math.floor(width / 100);
+    const threshold = 30;
+    
+    for (let x = scanInterval; x < width - scanInterval; x += scanInterval) {
+      let verticalEdgeCount = 0;
+      for (let y = 1; y < height - 1; y++) {
+        const idx = (y * width + x) * 4;
+        const prevIdx = ((y - 1) * width + x) * 4;
+        
+        const currentBrightness = (data[idx] + data[idx + 1] + data[idx + 2]) / 3;
+        const prevBrightness = (data[prevIdx] + data[prevIdx + 1] + data[prevIdx + 2]) / 3;
+        
+        if (Math.abs(currentBrightness - prevBrightness) > threshold) {
+          verticalEdgeCount++;
+        }
+      }
+      
+      if (verticalEdgeCount > height * 0.3) {
+        detectedCols++;
+      }
+    }
+    
+    for (let y = scanInterval; y < height - scanInterval; y += scanInterval) {
+      let horizontalEdgeCount = 0;
+      for (let x = 1; x < width - 1; x++) {
+        const idx = (y * width + x) * 4;
+        const prevIdx = (y * width + (x - 1)) * 4;
+        
+        const currentBrightness = (data[idx] + data[idx + 1] + data[idx + 2]) / 3;
+        const prevBrightness = (data[prevIdx] + data[prevIdx + 1] + data[prevIdx + 2]) / 3;
+        
+        if (Math.abs(currentBrightness - prevBrightness) > threshold) {
+          horizontalEdgeCount++;
+        }
+      }
+      
+      if (horizontalEdgeCount > width * 0.3) {
+        detectedRows++;
+      }
+    }
+    
+    detectedCols = Math.max(1, Math.round(detectedCols / 10));
+    detectedRows = Math.max(1, Math.round(detectedRows / 10));
+    
+    if (detectedCols < 2 || detectedRows < 2 || detectedCols > 10 || detectedRows > 20) {
+      const stickerSize = 1000;
+      const fallbackCols = Math.floor(width / stickerSize);
+      const fallbackRows = Math.floor(height / stickerSize);
+      return fallbackCols > 0 && fallbackRows > 0 ? { cols: fallbackCols, rows: fallbackRows } : { cols: 4, rows: 8 };
+    }
+    
+    return { cols: detectedCols, rows: detectedRows };
   };
 
   const loadImageFromFile = (file: File) => {
@@ -457,36 +596,68 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
   };
 
   const downloadImage = async (dataUrl: string, index: number) => {
-  let sizeLabel = '';
-  if (currentSize === 360) {
-    sizeLabel = '_360';
-  } else if (currentSize === '740×640') {
-    sizeLabel = '_ogq';
-  }
-  const filename = `sticker_${String(index + 1).padStart(2, '0')}${sizeLabel}.png`;
-  await downloadImageNative(dataUrl, filename);
-};
+    try {
+      let sizeLabel = '';
+      if (currentSize === 360) {
+        sizeLabel = '_360';
+      } else if (currentSize === '740×640') {
+        sizeLabel = '_ogq';
+      }
+      const filename = `sticker_${String(index + 1).padStart(2, '0')}${sizeLabel}.png`;
+      await downloadImageNative(dataUrl, filename);
+      toast({
+        title: "다운로드 완료",
+        description: `${filename}이(가) 저장되었습니다.`,
+      });
+    } catch (error) {
+      console.error('Download error:', error);
+      toast({
+        title: "다운로드 실패",
+        description: "파일 저장 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const downloadAll = async () => {
-    const zip = new JSZip();
-    
-    let sizeLabel = '';
-    if (currentSize === 360) {
-      sizeLabel = '_360';
-    } else if (currentSize === '740×640') {
-      sizeLabel = '_ogq';
+    try {
+      toast({
+        title: "ZIP 파일 생성 중...",
+        description: "잠시만 기다려주세요.",
+      });
+
+      const zip = new JSZip();
+      
+      let sizeLabel = '';
+      if (currentSize === 360) {
+        sizeLabel = '_360';
+      } else if (currentSize === '740×640') {
+        sizeLabel = '_ogq';
+      }
+      
+      for (let i = 0; i < croppedImages.length; i++) {
+        const dataUrl = croppedImages[i];
+        const base64Data = dataUrl.split(',')[1];
+        const filename = `sticker_${String(i + 1).padStart(2, '0')}${sizeLabel}.png`;
+        zip.file(filename, base64Data, { base64: true });
+      }
+      
+      const content = await zip.generateAsync({ type: 'blob' });
+      const zipFilename = `stickers${sizeLabel}.zip`;
+      await downloadZipNative(content, zipFilename);
+      
+      toast({
+        title: "다운로드 완료",
+        description: `${zipFilename}이(가) 저장되었습니다.`,
+      });
+    } catch (error) {
+      console.error('Download all error:', error);
+      toast({
+        title: "다운로드 실패",
+        description: "ZIP 파일 저장 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
     }
-    
-    for (let i = 0; i < croppedImages.length; i++) {
-      const dataUrl = croppedImages[i];
-      const base64Data = dataUrl.split(',')[1];
-      const filename = `sticker_${String(i + 1).padStart(2, '0')}${sizeLabel}.png`;
-      zip.file(filename, base64Data, { base64: true });
-    }
-    
-    const content = await zip.generateAsync({ type: 'blob' });
-const zipFilename = `stickers${sizeLabel}.zip`;
-await downloadZipNative(content, zipFilename);
     
     // 전면 광고 표시 (다운로드 완료 후)
     if (isInterstitialReady()) {
@@ -498,11 +669,50 @@ await downloadZipNative(content, zipFilename);
     }
   };
 
+  const handleDownloadOgqMain = async () => {
+    if (!ogqMainImage) return;
+    try {
+      await downloadImageNative(ogqMainImage, 'ogq_main_240x240.png');
+      toast({
+        title: "다운로드 완료",
+        description: "ogq_main_240x240.png이(가) 저장되었습니다.",
+      });
+    } catch (error) {
+      console.error('OGQ Main download error:', error);
+      toast({
+        title: "다운로드 실패",
+        description: "파일 저장 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDownloadOgqTab = async () => {
+    if (!ogqTabImage) return;
+    try {
+      await downloadImageNative(ogqTabImage, 'ogq_tab_96x74.png');
+      toast({
+        title: "다운로드 완료",
+        description: "ogq_tab_96x74.png이(가) 저장되었습니다.",
+      });
+    } catch (error) {
+      console.error('OGQ Tab download error:', error);
+      toast({
+        title: "다운로드 실패",
+        description: "파일 저장 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const isKakaoMode = fixedPlatform === 'kakao' || (!fixedPlatform && platform === 'kakao');
   const isOgqMode = fixedPlatform === 'ogq' || (!fixedPlatform && platform === 'ogq');
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
+    <div ref={containerRef} className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
+      {/* 도움말 버튼 */}
+      <HelpButton />
+      
       {/* AdMob 상단 배너 */}
       <AdMobBanner 
         adId={ADMOB_CONFIG.BANNER_TOP_ID} 
@@ -514,19 +724,28 @@ await downloadZipNative(content, zipFilename);
         <div className="max-w-6xl mx-auto">
         {fixedPlatform && (
           <div className="mb-4">
-            <Link href="/">
-              <Button variant="outline" className="gap-2" data-testid="button-home">
-                <Home size={18} />
-                홈으로
-              </Button>
-            </Link>
+            <Button 
+              variant="outline" 
+              className="gap-2" 
+              data-testid="button-back"
+              onClick={() => {
+                if (window.history.length > 1) {
+                  window.history.back();
+                } else {
+                  setLocation('/');
+                }
+              }}
+            >
+              <ArrowLeft size={18} />
+              뒤로가기
+            </Button>
           </div>
         )}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-800 mb-2">
             {fixedPlatform === 'kakao' && '카카오톡 이모티콘 절단기'}
             {fixedPlatform === 'ogq' && '네이버 OGQ 이모티콘 절단기'}
-            {!fixedPlatform && '이모티콘 절단기'}
+            
           </h1>
           <p className="text-gray-700 mb-2">
             이미지를 업로드하고 원하는 부분을 잘라서 이모티콘을 만드세요
@@ -600,58 +819,58 @@ await downloadZipNative(content, zipFilename);
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">열 (Columns)</label>
                       <div className="flex items-center gap-2">
-  <Button
-    type="button"
-    data-testid="button-decrease-cols"
-    onClick={() => setGridCols(Math.max(1, gridCols - 1))}
-    disabled={autoDetectGrid || gridCols <= 1}
-    className="px-3 py-2 font-bold text-lg min-w-[44px]"
-    variant="outline"
-  >
-    −
-  </Button>
-  <div className="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-white text-center font-semibold text-gray-900">
-    {gridCols}
-  </div>
-  <Button
-    type="button"
-    data-testid="button-increase-cols"
-    onClick={() => setGridCols(Math.min(20, gridCols + 1))}
-    disabled={autoDetectGrid || gridCols >= 20}
-    className="px-3 py-2 font-bold text-lg min-w-[44px]"
-    variant="outline"
-  >
-    +
-  </Button>
-</div>
+                        <Button
+                          type="button"
+                          data-testid="button-decrease-cols"
+                          onClick={() => setGridCols(Math.max(1, gridCols - 1))}
+                          disabled={autoDetectGrid || gridCols <= 1}
+                          className="px-3 py-2 font-bold text-lg min-w-[44px]"
+                          variant="outline"
+                        >
+                          −
+                        </Button>
+                        <div className="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-white text-center font-semibold text-gray-900">
+                          {gridCols}
+                        </div>
+                        <Button
+                          type="button"
+                          data-testid="button-increase-cols"
+                          onClick={() => setGridCols(Math.min(20, gridCols + 1))}
+                          disabled={autoDetectGrid || gridCols >= 20}
+                          className="px-3 py-2 font-bold text-lg min-w-[44px]"
+                          variant="outline"
+                        >
+                          +
+                        </Button>
+                      </div>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">행 (Rows)</label>
                       <div className="flex items-center gap-2">
-  <Button
-    type="button"
-    data-testid="button-decrease-rows"
-    onClick={() => setGridRows(Math.max(1, gridRows - 1))}
-    disabled={autoDetectGrid || gridRows <= 1}
-    className="px-3 py-2 font-bold text-lg min-w-[44px]"
-    variant="outline"
-  >
-    −
-  </Button>
-  <div className="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-white text-center font-semibold text-gray-900">
-    {gridRows}
-  </div>
-  <Button
-    type="button"
-    data-testid="button-increase-rows"
-    onClick={() => setGridRows(Math.min(20, gridRows + 1))}
-    disabled={autoDetectGrid || gridRows >= 20}
-    className="px-3 py-2 font-bold text-lg min-w-[44px]"
-    variant="outline"
-  >
-    +
-  </Button>
-</div>
+                        <Button
+                          type="button"
+                          data-testid="button-decrease-rows"
+                          onClick={() => setGridRows(Math.max(1, gridRows - 1))}
+                          disabled={autoDetectGrid || gridRows <= 1}
+                          className="px-3 py-2 font-bold text-lg min-w-[44px]"
+                          variant="outline"
+                        >
+                          −
+                        </Button>
+                        <div className="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-white text-center font-semibold text-gray-900">
+                          {gridRows}
+                        </div>
+                        <Button
+                          type="button"
+                          data-testid="button-increase-rows"
+                          onClick={() => setGridRows(Math.min(20, gridRows + 1))}
+                          disabled={autoDetectGrid || gridRows >= 20}
+                          className="px-3 py-2 font-bold text-lg min-w-[44px]"
+                          variant="outline"
+                        >
+                          +
+                        </Button>
+                      </div>
                     </div>
                   </div>
                   <p className="text-xs text-gray-600 mt-2">
@@ -812,7 +1031,7 @@ await downloadZipNative(content, zipFilename);
                       />
                       <Button
                         data-testid="button-download-main"
-                        onClick={() => downloadImageNative(ogqMainImage, 'ogq_main_240x240.png')}
+                        onClick={handleDownloadOgqMain}
                         className="w-full py-2 px-3 text-sm"
                         style={{ backgroundColor: 'hsl(217, 91%, 60%)', color: 'white' }}
                       >
@@ -834,7 +1053,7 @@ await downloadZipNative(content, zipFilename);
                       />
                       <Button
                         data-testid="button-download-tab"
-                        onClick={() => downloadImageNative(ogqTabImage, 'ogq_tab_96x74.png')}
+                        onClick={handleDownloadOgqTab}
                         className="w-full py-2 px-3 text-sm"
                         style={{ backgroundColor: 'hsl(142, 71%, 45%)', color: 'white' }}
                       >
@@ -857,10 +1076,9 @@ await downloadZipNative(content, zipFilename);
                 )}
               </h2>
               {croppedImages.length > 0 && (
-  <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-    {isKakaoMode && (
-      <Button
-        data-testid="button-chat-preview"
+                <div className="flex gap-2">
+                  <Button
+                    data-testid="button-chat-preview"
                     onClick={() => setShowChatPreview(!showChatPreview)}
                     className="py-2 px-4 flex items-center gap-2"
                     style={{ backgroundColor: showChatPreview ? 'hsl(142, 71%, 45%)' : 'hsl(217, 91%, 60%)', color: 'white' }}
@@ -872,10 +1090,8 @@ await downloadZipNative(content, zipFilename);
                       className={`transform transition-transform duration-200 ${showChatPreview ? 'rotate-180' : 'rotate-0'}`}
                     />
                   </Button>
-)}
-                      {(isKakaoMode || isOgqMode) && (
-      <Button
-        data-testid="button-download-all"
+                  <Button
+                    data-testid="button-download-all"
                     onClick={downloadAll}
                     className="py-2 px-4"
                     style={{ backgroundColor: 'hsl(262, 52%, 47%)', color: 'white' }}
@@ -883,7 +1099,6 @@ await downloadZipNative(content, zipFilename);
                     <Download size={18} />
                     전체 다운로드
                   </Button>
-)}
                 </div>
               )}
             </div>
@@ -946,7 +1161,7 @@ await downloadZipNative(content, zipFilename);
                 items={croppedImages.map((_, i) => `sticker-${i}`)}
                 strategy={rectSortingStrategy}
               >
-                <div className="grid grid-cols-3 gap-3 max-h-[600px] overflow-y-auto">
+                <div className="grid grid-cols-3 gap-3 max-h-[600px] overflow-y-auto" data-testid="sticker-grid">
                   {croppedImages.map((dataUrl, index) => (
                     <SortableSticker
                       key={`sticker-${index}`}
