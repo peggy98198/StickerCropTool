@@ -745,7 +745,7 @@ export default function StickerCropTool({ platform: fixedPlatform }: StickerCrop
           <h1 className="text-3xl font-bold text-gray-800 mb-2">
             {fixedPlatform === 'kakao' && '카카오톡 이모티콘 절단기'}
             {fixedPlatform === 'ogq' && '네이버 OGQ 이모티콘 절단기'}
-            {!fixedPlatform && '이모티콘 절단기'}
+            
           </h1>
           <p className="text-gray-700 mb-2">
             이미지를 업로드하고 원하는 부분을 잘라서 이모티콘을 만드세요
