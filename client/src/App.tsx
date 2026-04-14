@@ -9,6 +9,7 @@ import { App as CapacitorApp } from "@capacitor/app";
 import { AdMob } from "@capacitor-community/admob";
 import Home from "@/pages/Home";
 import StickerCropTool from "@/pages/StickerCropTool";
+import Portfolio from "@/pages/Portfolio";
 import { addInterstitialListeners, removeInterstitialListeners } from "@/lib/admob-interstitial";
 import { ADMOB_CONFIG } from "@/lib/admob-config";
 import { Onboarding } from "@/components/Onboarding.tsx";
@@ -19,6 +20,7 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/kakao" component={() => <StickerCropTool platform="kakao" />} />
       <Route path="/ogq" component={() => <StickerCropTool platform="ogq" />} />
+      <Route path="/portfolio" component={Portfolio} />
       <Route path="*" component={Home} />
     </Switch>
   );

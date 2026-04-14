@@ -578,10 +578,16 @@ export default function Home() {
             </Link>
           </div>
 
-          <footer className="mt-8 py-4 text-center text-xs text-gray-500 border-t">
-            <p>
-              © 2025 zziraengi. All rights reserved.
-            </p>
+          <footer className="mt-8 py-4 text-center text-xs text-gray-500 border-t space-y-2">
+            <p>© 2025 zziraengi. All rights reserved.</p>
+            <Link href="/portfolio">
+              <button
+                className="text-xs text-purple-400 hover:text-purple-600 transition-colors underline underline-offset-2"
+                data-testid="link-portfolio"
+              >
+                제작자 포트폴리오 보기
+              </button>
+            </Link>
           </footer>
         </div>
       </div>
